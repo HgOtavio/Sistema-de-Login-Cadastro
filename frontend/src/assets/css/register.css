@@ -2,10 +2,10 @@ html, body {
   margin: 0;
   padding: 0;
   height: 100%;
-  background-color: #000; /* garante fundo preto total */
+  background-color: #000;
 }
 
-.login-container {
+.register-container {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -15,41 +15,40 @@ html, body {
   font-family: Arial, sans-serif;
 }
 
-/* Caixa de login branca */
-.login-box {
-  background: #fff; 
-  padding: 50px; 
+.register-box {
+  background: #fff;
+  padding: 50px;
   border-radius: 12px;
   width: 400px;
   text-align: center;
   box-sizing: border-box;
 }
 
-/* Título */
-.login-box h2 {
+.register-box h2 {
   margin-bottom: 30px;
-  color: #001f99; 
+  color: #001f99;
 }
 
-/* Inputs maiores para olho nativo aparecer */
-.login-box input {
+.register-form {
   width: 100%;
-  padding: 18px; 
+}
+
+.register-input {
+  width: 100%;
+  padding: 18px;
   margin: 12px 0;
-  border: 1px solid #060d2b; 
+  border: 1px solid #060d2b;
   border-radius: 8px;
   box-sizing: border-box;
-  font-size: 16px; 
+  font-size: 16px;
   color: #070e27;
 }
 
-/* Placeholder azul */
-.login-box input::placeholder {
+.register-input::placeholder {
   color: #000000;
 }
 
-/* Botão */
-.login-box button {
+.register-button {
   width: 100%;
   padding: 16px;
   margin-top: 15px;
@@ -62,12 +61,11 @@ html, body {
   transition: background-color 0.3s;
 }
 
-.login-box button:hover {
+.register-button:hover {
   background-color: #0026ff;
 }
 
-/* Link */
-.login-box a {
+.register-link {
   display: block;
   margin-top: 15px;
   color: #4a6fff;
@@ -75,6 +73,6 @@ html, body {
   font-size: 14px;
 }
 
-.login-box a:hover {
+.register-link:hover {
   text-decoration: underline;
 }

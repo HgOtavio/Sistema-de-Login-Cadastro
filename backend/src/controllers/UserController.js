@@ -29,4 +29,6 @@ module.exports = {
       return res.json({ message: "Removido com sucesso" });
     });
   }
+
 };
+

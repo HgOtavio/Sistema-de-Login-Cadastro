@@ -1,0 +1,141 @@
+.manage-container {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 40px;
+  width: 100%;
+  min-height: 100vh;
+  background: #000;
+  color: #fff;
+}
+
+.manage-box {
+  background: #111;
+  padding: 25px;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 900px;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.15);
+}
+
+.manage-title {
+  text-align: center;
+  font-size: 28px;
+  margin-bottom: 25px;
+  color: #9b4dff;
+}
+
+
+.add-btn {
+  background: #9b4dff;
+  color: #fff;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  margin-bottom: 18px;
+  transition: 0.3s;
+}
+
+.add-btn:hover {
+  background: #7b32e0;
+}
+
+
+
+.user-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #181818;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.user-table thead {
+  background: #181818 !important;
+}
+
+.user-table thead th {
+  padding: 12px;
+  font-size: 16px;
+  color: #a259ff;
+  text-align: left;
+}
+
+.user-table tbody td {
+  padding: 12px;
+  border-top: 1px solid #333;
+  color: #fff;
+}
+
+.user-table tr:hover {
+  background: #222;
+}
+
+
+.user-table-empty, 
+.user-table tbody tr td[colspan] {
+  text-align: center;
+  padding: 20px;
+  color: #bbb;
+}
+
+
+
+.edit-btn {
+  background: #8b4cff;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  cursor: pointer;
+}
+
+.delete-btn {
+  background: #f33737;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  cursor: pointer;
+  margin-left: 5px;
+}
+
+.edit-btn:hover {
+  background: #773ae9;
+}
+
+.delete-btn:hover {
+  background: #d13c3c;
+}
+
+
+@media (max-width: 700px) {
+
+  .user-table thead {
+    display: none;
+  }
+
+  .user-table tr {
+    display: block;
+    margin-bottom: 12px;
+    border: 1px solid #333;
+    border-radius: 10px;
+    padding: 10px;
+    background: #1b1b1b;
+  }
+
+  .user-table td {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    border: none;
+  }
+
+  .user-table td::before {
+    content: attr(data-label);
+    font-weight: bold;
+    color: #a259ff;
+  }
+}

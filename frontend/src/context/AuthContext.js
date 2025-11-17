@@ -17,14 +17,21 @@ export function AuthProvider({ children }) {
   }, []);
 
   async function login(email, password) {
-    const response = await api.post("/auth/login", { email, password });
+    try {
+      const response = await api.post("/auth/login", { email, password });
 
-    localStorage.setItem("token", response.data.token);
-    localStorage.setItem("user", JSON.stringify(response.data.user));
+      localStorage.setItem("token", response.data.token);
+      localStorage.setItem("user", JSON.stringify(response.data.user));
 
-    api.defaults.headers.common["Authorization"] = response.data.token;
+      api.defaults.headers.common["Authorization"] = response.data.token;
 
-    setUser(response.data.user);
+      setUser(response.data.user);
+      return response.data;
+    } catch (error) {
+      if (error.response) console.log(error.response.data);
+      else console.log(error);
+      throw error;
+    }
   }
 
   function logout() {

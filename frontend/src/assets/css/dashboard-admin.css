@@ -1,0 +1,158 @@
+  body.dashboard-admin {
+    background-color: #000;
+  }
+
+  .dashboard-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    color: #fff;
+  }
+
+  .dashboard-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+  }
+
+  .admin-title {
+    color: #fff;
+    margin-bottom: 20px;
+  }
+
+  .dashboard-box {
+    background: #121212;
+    padding: 40px;
+    width: 500px;
+    border-radius: 12px;
+    text-align: center;
+  }
+
+  .dashboard-title {
+    color: #a259ff;
+  }
+
+  .dashboard-role {
+    color: #fdebff;
+  }
+
+  .dashboard-logout {
+    width: 100%;
+    padding: 14px;
+    background-color: #7b2bff;
+    border: none;
+    margin-top: 12px;
+    border-radius: 8px;
+    color: #fff;
+    cursor: pointer;
+    transition: .3s;
+  }
+
+  .dashboard-logout:hover {
+    background-color: #5a14d6;
+  }
+
+  .admin-btn {
+    width: 100%;
+    padding: 14px;
+    margin-top: 10px;
+    background: #7b2bff;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: .3s;
+  }
+
+  .admin-btn:hover {
+    background: #5a14d6;
+  }
+
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .modal-box {
+    background: #1a1a1a;
+    padding: 30px;
+    border-radius: 10px;
+    width: 350px;
+    text-align: center;
+    color: #fff;
+  }
+
+  .modal-box input {
+    width: 100%;
+    padding: 12px;
+    margin-top: 10px;
+    border-radius: 6px;
+    border: 1px solid #7b2bff;
+    background: #111;
+    color: #fff;
+    font-size: 16px;
+    
+
+  }
+
+  .modal-box button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 6px;
+    background: #7b2bff;
+    color: white;
+    cursor: pointer;
+    transition: .3s;
+  }
+
+  .modal-box button:hover {
+    background: #5a14d6;
+  }
+
+  .password-container {
+    position: relative;
+    width: 83%;
+    
+  }
+
+  .password-container input {
+    width: 100%;
+    padding: 12px;
+    padding-right: 45px;
+    border-radius: 6px;
+    border: 1px solid #7b2bff;
+    background: #111;
+    color: #fff;
+    font-size: 16px;
+    outline: none;
+    
+  }
+
+  .password-icon {
+    position: absolute;
+    left:200px;
+    top: 50%;
+    transform: translateY(-30%);
+    width: 22px;
+    height: 22px;
+    cursor: pointer;
+    opacity: .8;
+    filter: brightness(0) invert(1);
+    transition: 0.2s;
+  }
+
+  .password-icon:hover {
+    opacity: 1;
+  }
