@@ -35,93 +35,105 @@ export default function AddUser() {
       return response.data;
     } catch (error) {
       if (error.response) {
-        console.log("Erro ao criar usuário:", error.response.data);
         const msg =
           error.response.data.error ||
           JSON.stringify(error.response.data) ||
           "Verifique os dados";
         alert("Erro ao criar usuário: " + msg);
       } else {
-        console.log("Erro ao criar usuário:", error);
         alert("Erro ao criar usuário. Verifique a conexão com o servidor.");
       }
     }
   }
 
   return (
-    <div className="manage-container">
-      <div className="manage-box add-box">
-        <h1 className="manage-title">Adicionar Novo Usuário</h1>
+    <div className="mc">
+      <div className="mb ab">
 
-        <form className="form-add" onSubmit={handleCreate}>
+        <a href="/gerenciar-usuarios" className="btn-voltar">
+          ⬅ Voltar
+        </a>
 
-          <label className="form-label">Nome</label>
-          <input
-            className="input-field"
-            type="text"
-            placeholder="Nome completo"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-          />
+        <h1 className="mt">Adicionar Novo Usuário</h1>
 
-          <label className="form-label">Email</label>
-          <input
-            className="input-field"
-            type="email"
-            placeholder="email@exemplo.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-
-          <label className="form-label">Senha</label>
-          <div className="password-container">
+        <form className="fa" onSubmit={handleCreate}>
+          <div className="fg">
+            <label className="flb">Nome</label>
             <input
-              className="input-field"
-              type={showPassword ? "text" : "password"}
-              placeholder="Digite a senha"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              className="ifl"
+              type="text"
+              placeholder="Nome completo"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
               required
-            />
-            <img
-              src={showPassword ? EyeOpen : EyeClosed}
-              className="password-icon"
-              onClick={() => setShowPassword(!showPassword)}
-              alt="eye"
             />
           </div>
 
-          <label className="form-label">Confirmar Senha</label>
-          <div className="password-container">
+          <div className="fg">
+            <label className="flb">Email</label>
             <input
-              className="input-field"
-              type={showConfirmPassword ? "text" : "password"}
-              placeholder="Repita a senha"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="ifl"
+              type="email"
+              placeholder="email@exemplo.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               required
-            />
-            <img
-              src={showConfirmPassword ? EyeOpen : EyeClosed}
-              className="password-icon"
-              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              alt="eye"
             />
           </div>
 
-          <label className="form-label">Tipo de Usuário</label>
-          <select
-            className="select-field"
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-          >
-            <option value="user">Usuário comum</option>
-            <option value="admin">Administrador</option>
-          </select>
+          <div className="fg">
+            <label className="flb">Senha</label>
+            <div className="pc">
+              <input
+                className="ifl"
+                type={showPassword ? "text" : "password"}
+                placeholder="Digite a senha"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              <img
+                src={showPassword ? EyeOpen : EyeClosed}
+                className="pi"
+                onClick={() => setShowPassword(!showPassword)}
+                alt="eye"
+              />
+            </div>
+          </div>
 
-          <button type="submit" className="btn-save">
+          <div className="fg">
+            <label className="flb">Confirmar Senha</label>
+            <div className="pc">
+              <input
+                className="ifl"
+                type={showConfirmPassword ? "text" : "password"}
+                placeholder="Repita a senha"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+              />
+              <img
+                src={showConfirmPassword ? EyeOpen : EyeClosed}
+                className="pi"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                alt="eye"
+              />
+            </div>
+          </div>
+
+          <div className="fg ff">
+            <label className="flb">Tipo de Usuário</label>
+            <select
+              className="sf"
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+            >
+              <option value="user">Usuário comum</option>
+              <option value="admin">Administrador</option>
+            </select>
+          </div>
+
+          <button type="submit" className="bs ff">
             Salvar Usuário
           </button>
         </form>

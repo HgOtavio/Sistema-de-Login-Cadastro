@@ -45,8 +45,7 @@ export default function Login() {
             onChange={(e) => setEmail(e.target.value)}
             required
           />
-
-          <div className="password-container">
+       <div className="password-contai">
             <input
               type={showPassword ? "text" : "password"}
               placeholder="Senha"
@@ -56,11 +55,12 @@ export default function Login() {
 
             <img
               src={showPassword ? EyeOpen : EyeClosed}
-              className="password-icon"
+              className="passord-icon"
               onClick={() => setShowPassword(!showPassword)}
               alt="eye"
             />
           </div>
+        
 
           <button type="submit">Entrar</button>
         </form>

@@ -7,15 +7,17 @@
   min-height: 100vh;
   background: #000;
   color: #fff;
+  
 }
 
-.manage-box {
+.manage-boxes {
   background: #111;
   padding: 25px;
   border-radius: 12px;
-  width: 90%;
+  width: 100%;
   max-width: 900px;
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.15);
+  border: 1px solid #7b2bff;
+
 }
 
 .manage-title {
@@ -25,6 +27,21 @@
   color: #9b4dff;
 }
 
+.filter-input {
+  width: 97%;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #7b2bff;
+  background: #1a1a1a;
+  color: #fff;
+  font-size: 16px;
+  margin-bottom: 20px;
+  outline: none;
+}
+
+.filter-input:focus {
+  border-color: #a259ff;
+}
 
 .add-btn {
   background: #9b4dff;
@@ -35,14 +52,11 @@
   cursor: pointer;
   font-size: 16px;
   margin-bottom: 18px;
-  transition: 0.3s;
 }
 
 .add-btn:hover {
   background: #7b32e0;
 }
-
-
 
 .user-table {
   width: 100%;
@@ -50,10 +64,14 @@
   background: #181818;
   border-radius: 10px;
   overflow: hidden;
+  border: 1px solid #7b2bff;
+
 }
 
 .user-table thead {
   background: #181818 !important;
+  border: 1px solid #7b2bff;
+
 }
 
 .user-table thead th {
@@ -73,23 +91,22 @@
   background: #222;
 }
 
-
-.user-table-empty, 
+.user-table-empty,
 .user-table tbody tr td[colspan] {
   text-align: center;
   padding: 20px;
   color: #bbb;
 }
 
-
-
-.edit-btn {
+.edit-btna {
   background: #8b4cff;
   padding: 6px 10px;
   border: none;
   border-radius: 6px;
   color: #fff;
   cursor: pointer;
+  height: 39px;
+  width: 65px;
 }
 
 .delete-btn {
@@ -100,9 +117,11 @@
   color: #fff;
   cursor: pointer;
   margin-left: 5px;
+  height: 39px;
+  width: 65px;
 }
 
-.edit-btn:hover {
+.edit-btna:hover {
   background: #773ae9;
 }
 
@@ -110,9 +129,7 @@
   background: #d13c3c;
 }
 
-
 @media (max-width: 700px) {
-
   .user-table thead {
     display: none;
   }
@@ -138,4 +155,22 @@
     font-weight: bold;
     color: #a259ff;
   }
+}
+.back-btn {
+  background: #222;
+  color: #a259ff;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 15px;
+  margin-bottom: 15px;
+  margin-right: 10px;
+  transition: 0.3s;
+  border: 1px solid #7b2bff;
+}
+
+.back-btn:hover {
+  background: #7b2bff;
+  color: #fff;
 }

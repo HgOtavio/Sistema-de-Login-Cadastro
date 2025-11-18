@@ -97,7 +97,7 @@ export default function Dashboard() {
           <div className="modal-box">
             <h3>Digite a senha de administrador</h3>
 
-            <div className="password-container">
+            <div className="passward-container">
               <input
                 type={showAdminPassword ? "text" : "password"}
                 placeholder="Senha admin"
@@ -107,7 +107,7 @@ export default function Dashboard() {
               />
                <img
                 src={showAdminPassword ? EyeOpen : EyeClosed}
-                className="password-icon"
+                className="passward-icon"
                 onClick={() => setShowAdminPassword(!showAdminPassword)}
                 alt="eye"
               />

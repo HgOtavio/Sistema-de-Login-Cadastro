@@ -4,8 +4,8 @@ import "../assets/css/gerenciar-usuarios.css";
 export default function GerenciarUsuarios() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [filtro, setFiltro] = useState("");
 
-  
   async function carregarUsuarios() {
     try {
       setLoading(true);
@@ -28,7 +28,6 @@ export default function GerenciarUsuarios() {
     }
   }
 
-
   async function excluirUsuario(id) {
     try {
       const confirmar = window.confirm("Deseja realmente excluir este usuário?");
@@ -50,15 +49,23 @@ export default function GerenciarUsuarios() {
     }
   }
 
- 
   function editarUsuario(id) {
     window.location.href = `/edit-user/${id}`;
   }
 
- 
   function adicionarNovo() {
     window.location.href = "/add-user";
   }
+
+  const usuariosFiltrados = users.filter((u) => {
+    const f = filtro.toLowerCase();
+    return (
+      u.name.toLowerCase().includes(f) ||
+      u.email.toLowerCase().includes(f) ||
+      String(u.id).includes(f) ||
+      u.role.toLowerCase().includes(f)
+    );
+  });
 
   useEffect(() => {
     carregarUsuarios();
@@ -66,8 +73,20 @@ export default function GerenciarUsuarios() {
 
   return (
     <div className="manage-container">
-      <div className="manage-box">
+      <div className="manage-boxes">
+        <button className="back-btn" onClick={() => window.location.href = "http://localhost:3000/dashboard"}>
+  ⬅ Voltar ao Dashboard
+</button>
+
         <h1 className="manage-title">Gerenciar Usuários</h1>
+
+        <input
+          type="text"
+          className="filter-input"
+          placeholder="Filtrar por nome, email, ID ou tipo..."
+          value={filtro}
+          onChange={(e) => setFiltro(e.target.value)}
+        />
 
         <button className="add-btn" onClick={adicionarNovo}>
           + Adicionar Usuário
@@ -88,19 +107,19 @@ export default function GerenciarUsuarios() {
             </thead>
 
             <tbody>
-              {users.length === 0 ? (
+              {usuariosFiltrados.length === 0 ? (
                 <tr>
                   <td colSpan="5">Nenhum usuário encontrado.</td>
                 </tr>
               ) : (
-                users.map((u) => (
+                usuariosFiltrados.map((u) => (
                   <tr key={u.id}>
                     <td>{u.id}</td>
                     <td>{u.name}</td>
                     <td>{u.email}</td>
                     <td>{u.role}</td>
                     <td>
-                      <button className="edit-btn" onClick={() => editarUsuario(u.id)}>
+                      <button className="edit-btna" onClick={() => editarUsuario(u.id)}>
                         Editar
                       </button>
 

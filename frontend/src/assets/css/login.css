@@ -6,7 +6,6 @@ html, body {
   font-family: Arial, sans-serif;
 }
 
-/* container */
 .login-container {
   display: flex;
   flex-direction: column;
@@ -16,7 +15,6 @@ html, body {
   width: 100%;
 }
 
-/* caixa do login */
 .login-box {
   background: #121212;
   padding: 40px;
@@ -25,12 +23,12 @@ html, body {
   text-align: center;
   color: #fff;
   box-sizing: border-box;
-  border: 1px solid rgba(58,139,255,0.25); /* azul */
+  border: 1px solid rgba(58,139,255,0.25);
 }
 
 .login-box h2 {
   margin-bottom: 25px;
-  color: #66aaff; /* azul claro */
+  color: #66aaff;
 }
 
 .login-box input {
@@ -38,7 +36,7 @@ html, body {
   padding: 16px;
   margin: 12px 0;
   border-radius: 8px;
-  border: 1px solid #3a8bff; 
+  border: 1px solid #3a8bff;
   background: #1a1a1a;
   color: #fff;
   font-size: 16px;
@@ -46,15 +44,19 @@ html, body {
 }
 
 .login-box input::placeholder {
-  color: #b8c9ff; /* azul acinzentado */
+  color: #b8c9ff;
 }
 
-/* botão */
+.password-contai input {
+  padding-right: 48px;
+  
+}
+
 .login-box button {
   width: 100%;
   padding: 14px;
   margin-top: 15px;
-  background: #3a8bff; /* azul primário */
+  background: #3a8bff;
   border: none;
   border-radius: 8px;
   color: white;
@@ -64,10 +66,9 @@ html, body {
 }
 
 .login-box button:hover {
-  background: #1768ff; /* azul mais forte */
+  background: #1768ff;
 }
 
-/* links */
 .login-box a {
   display: block;
   margin-top: 15px;
@@ -75,10 +76,10 @@ html, body {
   text-decoration: none;
   font-size: 14px;
 }
+
 .login-box a:hover {
   text-decoration: underline;
 }
-
 
 .error-message {
   color: #ffb3b3;
@@ -89,18 +90,14 @@ html, body {
   border-radius: 8px;
 }
 
-.password-container {
+.password-contai {
   position: relative;
   width: 100%;
 }
 
-.password-container input {
-  width: 100%;
-}
-
-.password-icon {
+.passord-icon {
   position: absolute;
-  right: 12px;
+  left: 285px;
   top: 50%;
   transform: translateY(-50%);
   width: 22px;
@@ -111,6 +108,6 @@ html, body {
   transition: .2s;
 }
 
-.password-icon:hover {
+.passord-icon:hover {
   opacity: 1;
 }

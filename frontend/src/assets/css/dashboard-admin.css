@@ -121,13 +121,13 @@
     background: #5a14d6;
   }
 
-  .password-container {
+  .passward-container {
     position: relative;
     width: 83%;
     
   }
 
-  .password-container input {
+  .passward-container input {
     width: 100%;
     padding: 12px;
     padding-right: 45px;
@@ -140,9 +140,9 @@
     
   }
 
-  .password-icon {
+  .passward-icon {
     position: absolute;
-    left:200px;
+    left:320px;
     top: 50%;
     transform: translateY(-30%);
     width: 22px;
@@ -153,6 +153,6 @@
     transition: 0.2s;
   }
 
-  .password-icon:hover {
+  .passward-icon:hover {
     opacity: 1;
   }
