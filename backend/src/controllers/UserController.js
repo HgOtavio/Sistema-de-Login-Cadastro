@@ -14,14 +14,36 @@ module.exports = {
     });
   },
 
-  update(req, res) {
-    const now = new Date().toISOString();
+ async update(req, res) {
+  try {
+    const { id } = req.params;
+    const { name, password } = req.body;
 
-    User.update(req.params.id, { ...req.body, updated_at: now }, function(err) {
-      if (err) return res.status(500).json({ error: "Erro ao atualizar" });
-      return res.json({ message: "Atualizado com sucesso" });
-    });
-  },
+   
+    if (req.user.role !== "admin" && req.user.id != id) {
+      return res.status(403).json({ error: "Sem permissão" });
+    }
+
+    const user = await User.findById(id);
+
+    if (!user) {
+      return res.status(404).json({ error: "Usuário não encontrado" });
+    }
+
+    
+    if (name) user.name = name;
+    if (password) user.password = password; // aqui hash depois
+
+    await user.save();
+
+    res.json({ message: "Usuário atualizado com sucesso" });
+
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: "Erro interno" });
+  }
+},
+
 
   remove(req, res) {
     User.remove(req.params.id, function(err) {

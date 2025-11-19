@@ -1,22 +1,22 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import "../assets/css/EditUser.css";
+import { useParams, useNavigate } from "react-router-dom";
+import "../assets/css/EditUserUser.css";
 
 import EyeOpen from "../assets/images/eye-open.png";
 import EyeClosed from "../assets/images/eye-closed.png";
 
-export default function EditUser() {
+export default function EditUserUser() {
   const { id } = useParams();
+  const navigate = useNavigate();
 
   const [user, setUser] = useState({
     name: "",
     email: "",
-    role: "",
     password: "",
+    role: ""       // <-- NECESSÁRIO PARA O PUT NÃO QUEBRAR
   });
 
   const [confirmPassword, setConfirmPassword] = useState("");
-
   const [showPass1, setShowPass1] = useState(false);
   const [showPass2, setShowPass2] = useState(false);
 
@@ -29,12 +29,14 @@ export default function EditUser() {
       });
 
       const data = await res.json();
+
       setUser({
-        name: data.name,
-        email: data.email,
-        role: data.role,
+        name: data.name || "",
+        email: data.email || "",
         password: "",
+        role: data.role || "user"   // <-- IMPORTANTE
       });
+
     } catch (err) {
       console.log("Erro ao carregar usuário:", err);
     }
@@ -58,9 +60,11 @@ export default function EditUser() {
         body: JSON.stringify(user),
       });
 
-      await res.json();
+      const data = await res.json();
+      console.log("Resposta:", data);
+
       alert("Atualizado com sucesso!");
-      window.location.href = "/gerenciar-usuarios";
+      navigate("/dashboard-user");
 
     } catch (err) {
       console.log("Erro ao atualizar usuário:", err);
@@ -72,91 +76,82 @@ export default function EditUser() {
   }, []);
 
   return (
-    <div className="panel-container">
-      <div className="panel-box">
-          <button
-          className="btn-back"
-          onClick={() => (window.location.href = "/gerenciar-usuarios")}
+    <div className="user-panel-container">
+      <div className="user-panel-box">
+
+        <button
+          className="user-btn-back"
+          onClick={() => navigate("/dashboard-user")}
         >
           ⬅ Voltar
         </button>
-        
-        <h1 className="panel-title">Editar Usuário</h1>
 
-      
+        <h1 className="user-panel-title">Editar Seus Dados</h1>
 
-        <form onSubmit={handleUpdate} className="panel-form-grid">
+        <form onSubmit={handleUpdate} className="user-panel-form-grid">
 
-          <div className="left-column">
+          <div className="user-left-column">
 
-            <label className="input-label">Nome</label>
+            <label className="user-input-label">Nome</label>
             <input
               type="text"
               value={user.name}
               onChange={(e) => setUser({ ...user, name: e.target.value })}
-              className="if"
+              className="user-input"
             />
 
-            <label className="input-label">Email</label>
+            <label className="user-input-label">Email</label>
             <input
               type="email"
               value={user.email}
-              onChange={(e) => setUser({ ...user, email: e.target.value })}
-              className="if"
+              readOnly        // <-- AGORA FUNCIONA (disabled quebrava tudo)
+              className="user-input"
             />
-
-            <label className="input-label">Cargo</label>
-            <select
-              value={user.role}
-              onChange={(e) => setUser({ ...user, role: e.target.value })}
-              className="ll"
-            >
-              <option value="user">Usuário Comum</option>
-              <option value="admin">Administrador</option>
-            </select>
-
           </div>
 
-          <div className="right-column">
+          <div className="user-right-column">
 
-            <label className="input-label">Nova Senha</label>
-            <div className="input-eye-container">
+            <label className="user-input-label">Nova Senha</label>
+            <div className="user-input-eye-container">
               <input
                 type={showPass1 ? "text" : "password"}
                 value={user.password}
-                onChange={(e) => setUser({ ...user, password: e.target.value })}
-                className="if"
+                onChange={(e) =>
+                  setUser({ ...user, password: e.target.value })
+                }
+                className="user-input"
                 placeholder="Digite a nova senha"
               />
               <img
                 src={showPass1 ? EyeOpen : EyeClosed}
-                className="eye-icon"
+                className="user-eye-icon"
                 onClick={() => setShowPass1(!showPass1)}
               />
             </div>
 
-            <label className="input-label">Confirmar Senha</label>
-            <div className="input-eye-container">
+            <label className="user-input-label">Confirmar Senha</label>
+            <div className="user-input-eye-container">
               <input
                 type={showPass2 ? "text" : "password"}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="if"
+                className="user-input"
                 placeholder="Repita a senha"
               />
               <img
                 src={showPass2 ? EyeOpen : EyeClosed}
-                className="eye-icon"
+                className="user-eye-icon"
                 onClick={() => setShowPass2(!showPass2)}
               />
             </div>
 
           </div>
-        </form>
 
-        <button id="save-btn" type="submit" onClick={handleUpdate} className="save-btn">
-          Salvar Alterações
-        </button>
+          <button type="submit" className="user-save-btn">
+            Salvar Alterações
+          </button>
+
+        </form>
 
       </div>
     </div>

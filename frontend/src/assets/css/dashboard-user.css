@@ -17,23 +17,51 @@ body.dashboard-user {
   height: 100vh;
 }
 
+
 .dashboard-box {
-  background: #fff;
+  background: #121212;
   padding: 40px;
-  width: 500px;
+  width: 420px;
   border-radius: 12px;
   text-align: center;
+  color: #fff;
+  border: 1px solid rgba(58,139,255,0.25); 
+  box-sizing: border-box;
 }
 
-.dashboard-title {
-  color: #001f99;
+
+.dashboard-titlle {
+  color: #66aaff;
+  font-size: 26px;
+  margin-bottom: 10px;
 }
+
 
 .dashboard-role {
-  color: #222;
+  color: #b8c9ff;
+  font-size: 16px;
+  margin-bottom: 30px;
 }
 
-.dashboard-logout {
+
+.user-edit-btn {
+  width: 100%;
+  padding: 14px;
+  background-color: #3a8bff;
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 15px;
+  cursor: pointer;
+  margin-bottom: 20px;
+  transition: .3s;
+}
+
+.user-edit-btn:hover {
+  background-color: #1768ff;
+}
+
+.dashboard-logot {
   width: 100%;
   padding: 14px;
   background-color: #4a6fff;
@@ -42,6 +70,7 @@ body.dashboard-user {
   color: #fff;
   cursor: pointer;
   transition: .3s;
+  margin-top: 10px;
 }
 
 .dashboard-logout:hover {

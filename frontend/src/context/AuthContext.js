@@ -12,7 +12,7 @@ export function AuthProvider({ children }) {
 
     if (storedUser && storedToken) {
       setUser(JSON.parse(storedUser));
-      api.defaults.headers.common["Authorization"] = storedToken;
+      api.defaults.headers.common["Authorization"] = `Bearer ${storedToken}`;
     }
   }, []);
 
@@ -20,16 +20,19 @@ export function AuthProvider({ children }) {
     try {
       const response = await api.post("/auth/login", { email, password });
 
-      localStorage.setItem("token", response.data.token);
-      localStorage.setItem("user", JSON.stringify(response.data.user));
+      const token = response.data.token;
+      const user = response.data.user;
 
-      api.defaults.headers.common["Authorization"] = response.data.token;
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(user));
 
-      setUser(response.data.user);
+      // CORREÇÃO AQUI
+      api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+
+      setUser(user);
+
       return response.data;
     } catch (error) {
-      if (error.response) console.log(error.response.data);
-      else console.log(error);
       throw error;
     }
   }
@@ -38,6 +41,7 @@ export function AuthProvider({ children }) {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     setUser(null);
+    delete api.defaults.headers.common["Authorization"];
   }
 
   return (

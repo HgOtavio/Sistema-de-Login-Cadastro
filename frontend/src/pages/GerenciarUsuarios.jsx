@@ -6,14 +6,16 @@ export default function GerenciarUsuarios() {
   const [loading, setLoading] = useState(false);
   const [filtro, setFiltro] = useState("");
 
+ 
+  const [showModal, setShowModal] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
+
   async function carregarUsuarios() {
     try {
       setLoading(true);
 
       const res = await fetch("http://localhost:3001/users", {
-        headers: {
-          Authorization: localStorage.getItem("token")
-        }
+        headers: { Authorization: localStorage.getItem("token") }
       });
 
       if (!res.ok) throw new Error("Falha ao buscar usuários");
@@ -28,12 +30,21 @@ export default function GerenciarUsuarios() {
     }
   }
 
-  async function excluirUsuario(id) {
-    try {
-      const confirmar = window.confirm("Deseja realmente excluir este usuário?");
-      if (!confirmar) return;
+  function abrirModal(id) {
+    setUserToDelete(id);
+    setShowModal(true);
+  }
 
-      const res = await fetch(`http://localhost:3001/users/${id}`, {
+o
+  function fecharModal() {
+    setUserToDelete(null);
+    setShowModal(false);
+  }
+
+
+  async function confirmarExclusao() {
+    try {
+      const res = await fetch(`http://localhost:3001/users/${userToDelete}`, {
         method: "DELETE",
         headers: {
           Authorization: localStorage.getItem("token")
@@ -42,15 +53,17 @@ export default function GerenciarUsuarios() {
 
       if (!res.ok) throw new Error("Erro ao excluir");
 
-      setUsers((prev) => prev.filter((u) => u.id !== id));
+      setUsers((prev) => prev.filter((u) => u.id !== userToDelete));
 
     } catch (err) {
       console.log("Erro ao excluir usuário:", err);
+    } finally {
+      fecharModal();
     }
   }
 
   function editarUsuario(id) {
-    window.location.href = `/edit-user/${id}`;
+    window.location.href = `/editar-meu-perfil/${id}`;
   }
 
   function adicionarNovo() {
@@ -74,9 +87,11 @@ export default function GerenciarUsuarios() {
   return (
     <div className="manage-container">
       <div className="manage-boxes">
-        <button className="back-btn" onClick={() => window.location.href = "http://localhost:3000/dashboard"}>
-  ⬅ Voltar ao Dashboard
-</button>
+
+        <button className="back-btn"
+          onClick={() => window.location.href = "/dashboard"}>
+          ⬅ Voltar ao Dashboard
+        </button>
 
         <h1 className="manage-title">Gerenciar Usuários</h1>
 
@@ -119,11 +134,13 @@ export default function GerenciarUsuarios() {
                     <td>{u.email}</td>
                     <td>{u.role}</td>
                     <td>
-                      <button className="edit-btna" onClick={() => editarUsuario(u.id)}>
+                      <button className="edit-btna"
+                        onClick={() => editarUsuario(u.id)}>
                         Editar
                       </button>
 
-                      <button className="delete-btn" onClick={() => excluirUsuario(u.id)}>
+                      <button className="delete-btn"
+                        onClick={() => abrirModal(u.id)}>
                         Excluir
                       </button>
                     </td>
@@ -134,6 +151,26 @@ export default function GerenciarUsuarios() {
           </table>
         )}
       </div>
+
+
+      {showModal && (
+        <div className="modal-overlay">
+          <div className="modal-box">
+            <h2>Confirmar Exclusão</h2>
+            <p>Tem certeza que deseja excluir este usuário?</p>
+
+            <div className="modal-buttons">
+              <button className="btn-cancel" onClick={fecharModal}>
+                Cancelar
+              </button>
+
+              <button className="btn-confirm" onClick={confirmarExclusao}>
+                Excluir
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
