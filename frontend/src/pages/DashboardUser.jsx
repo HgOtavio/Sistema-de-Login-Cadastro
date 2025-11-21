@@ -23,15 +23,17 @@ export default function DashboardUser() {
     );
   }
 
+
   return (
+    
     <div className="dashboard-container">
       <div className="dashboard-box">
-        <h1 className="dashboard-titlle">Olá, {user.name}</h1>
-        <p className="dashboard-role">Usuário comum</p>
+<h1 className="dashboard-titlle">Olá, {user.name.split(" ").slice(0, 2).join(" ")}</h1>
+       
 
         <button
           className="user-edit-btn"
-          onClick={() => navigate(`/editar-usuario/${user.id}`)}
+          onClick={() => navigate(`/editar-meu-perfil/${user.id}`)}
         >
           Editar minhas Informações
         </button>

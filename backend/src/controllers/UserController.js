@@ -14,35 +14,33 @@ module.exports = {
     });
   },
 
- async update(req, res) {
+async update(req, res) {
   try {
     const { id } = req.params;
     const { name, password } = req.body;
 
-   
     if (req.user.role !== "admin" && req.user.id != id) {
       return res.status(403).json({ error: "Sem permissão" });
     }
 
-    const user = await User.findById(id);
+    User.getById(id, (err, row) => {
+      if (!row) return res.status(404).json({ error: "Usuário não encontrado" });
 
-    if (!user) {
-      return res.status(404).json({ error: "Usuário não encontrado" });
-    }
-
-    
-    if (name) user.name = name;
-    if (password) user.password = password; // aqui hash depois
-
-    await user.save();
-
-    res.json({ message: "Usuário atualizado com sucesso" });
+      User.updateUser(id, { name, password }, (err) => {
+        if (err) {
+          console.log(err);
+          return res.status(500).json({ error: "Erro ao atualizar usuário" });
+        }
+        return res.json({ message: "Usuário atualizado com sucesso" });
+      });
+    });
 
   } catch (err) {
     console.log(err);
     res.status(500).json({ error: "Erro interno" });
   }
 },
+
 
 
   remove(req, res) {

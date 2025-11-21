@@ -1,5 +1,7 @@
 import { useState } from "react";
 import api from "../services/api";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import "../assets/css/add-user.css";
 
 import EyeOpen from "../assets/images/eye-open.png";
@@ -18,7 +20,7 @@ export default function AddUser() {
     e.preventDefault();
 
     if (password !== confirmPassword) {
-      alert("As senhas não conferem!");
+      toast.error("As senhas não conferem!");
       return;
     }
 
@@ -27,10 +29,10 @@ export default function AddUser() {
         name,
         email,
         password,
-        role
+        role,
       });
 
-      alert("Usuário criado com sucesso!");
+      toast.success("Usuário criado com sucesso!");
       window.location.href = "/gerenciar-usuarios";
       return response.data;
     } catch (error) {
@@ -39,9 +41,9 @@ export default function AddUser() {
           error.response.data.error ||
           JSON.stringify(error.response.data) ||
           "Verifique os dados";
-        alert("Erro ao criar usuário: " + msg);
+        toast.error("Erro ao criar usuário: " + msg);
       } else {
-        alert("Erro ao criar usuário. Verifique a conexão com o servidor.");
+        toast.error("Erro ao criar usuário. Verifique a conexão com o servidor.");
       }
     }
   }

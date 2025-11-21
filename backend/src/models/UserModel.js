@@ -1,4 +1,5 @@
 const db = require("../database/init");
+const bcrypt = require("bcryptjs");
 
 module.exports = {
   getAll(callback) {
@@ -28,18 +29,28 @@ module.exports = {
     ], callback);
   },
 
-  update(id, user, callback) {
-    const sql = `
-      UPDATE users SET name=?, email=?, role=?, updated_at=?
-      WHERE id=?
-    `;
-    db.run(sql, [
-      user.name,
-      user.email,
-      user.role,
-      user.updated_at,
-      id
-    ], callback);
+  updateUser(id, user, callback) {
+    let fields = [];
+    let values = [];
+
+    if (user.name) {
+      fields.push("name = ?");
+      values.push(user.name);
+    }
+
+    if (user.password) {
+      const hash = bcrypt.hashSync(user.password, 10);
+      fields.push("password = ?");
+      values.push(hash);
+    }
+
+    fields.push("updated_at = ?");
+    values.push(new Date().toISOString());
+
+    const sql = `UPDATE users SET ${fields.join(", ")} WHERE id = ?`;
+    values.push(id);
+
+    db.run(sql, values, callback);
   },
 
   remove(id, callback) {

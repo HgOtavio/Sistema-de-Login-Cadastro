@@ -26,7 +26,7 @@ export function AuthProvider({ children }) {
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(user));
 
-      // CORREÇÃO AQUI
+ 
       api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
       setUser(user);

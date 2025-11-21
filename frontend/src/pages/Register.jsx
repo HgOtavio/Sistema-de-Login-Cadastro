@@ -1,5 +1,7 @@
 import { useState } from "react";
 import api from "../services/api";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import "../assets/css/register.css";
 
 import EyeOpen from "../assets/images/eye-open.png";
@@ -8,10 +10,8 @@ import EyeClosed from "../assets/images/eye-closed.png";
 export default function Register() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -19,7 +19,7 @@ export default function Register() {
     e.preventDefault();
 
     if (password !== confirmPassword) {
-      alert("As senhas não conferem!");
+      toast.error("As senhas não conferem!");
       return;
     }
 
@@ -30,7 +30,7 @@ export default function Register() {
         password
       });
 
-      alert("Registrado com sucesso!");
+      toast.success("Registrado com sucesso!");
       window.location.href = "/";
       return response.data;
 
@@ -40,9 +40,9 @@ export default function Register() {
           error.response.data.error ||
           JSON.stringify(error.response.data) ||
           "Erro ao registrar.";
-        alert("Erro ao registrar: " + msg);
+        toast.error("Erro ao registrar: " + msg);
       } else {
-        alert("Erro inesperado. Tente novamente mais tarde.");
+        toast.error("Erro inesperado. Tente novamente mais tarde.");
       }
 
       console.log("Erro no registro:", error);
@@ -101,9 +101,7 @@ export default function Register() {
             <img
               src={showConfirmPassword ? EyeOpen : EyeClosed}
               className="password-eye"
-              onClick={() =>
-                setShowConfirmPassword(!showConfirmPassword)
-              }
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
               alt="eye"
             />
           </div>
