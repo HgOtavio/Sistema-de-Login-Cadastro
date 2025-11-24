@@ -1,3 +1,4 @@
+// Middleware responsável por validar o token JWT, extrair os dados do usuário e liberar o acesso se estiver autenticado
 const jwt = require("jsonwebtoken");
 
 module.exports = function (req, res, next) {
@@ -7,7 +8,7 @@ module.exports = function (req, res, next) {
     return res.status(401).json({ error: "Token ausente" });
   }
 
- 
+  // Permite tokens no formato "Bearer <token>"
   if (token.startsWith("Bearer ")) {
     token = token.slice(7, token.length);
   }

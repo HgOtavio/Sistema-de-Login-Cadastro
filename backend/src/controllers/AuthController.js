@@ -1,9 +1,12 @@
+// Importa o model, bcrypt para senhas e jwt para autenticação
 const User = require("../models/UserModel");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const SECRET = "minha-chave-secreta";
 
 module.exports = {
+
+  // Função de cadastro: cria usuário se o email não estiver cadastrado
   register(req, res) {
     const { name, email, password, role } = req.body;
 
@@ -23,6 +26,7 @@ module.exports = {
     });
   },
 
+  // Função de login: valida credenciais e gera token JWT com cargo e ID
   login(req, res) {
     const { email, password } = req.body;
 

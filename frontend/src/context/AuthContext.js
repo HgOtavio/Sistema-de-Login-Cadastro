@@ -1,3 +1,4 @@
+// Contexto de autenticação no React — controla login, logout e estado global do usuário
 import { createContext, useState, useEffect } from "react";
 import api from "../services/api";
 
@@ -6,6 +7,7 @@ export const AuthContext = createContext();
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
 
+  // Quando a página recarrega, mantém o usuário logado se houver token no localStorage
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     const storedToken = localStorage.getItem("token");
@@ -16,6 +18,7 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
+  // Função que realiza login através da API — salva token e dados do usuário
   async function login(email, password) {
     try {
       const response = await api.post("/auth/login", { email, password });
@@ -26,7 +29,7 @@ export function AuthProvider({ children }) {
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(user));
 
- 
+      // Define o token padrão para as próximas requisições
       api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
       setUser(user);
@@ -37,6 +40,7 @@ export function AuthProvider({ children }) {
     }
   }
 
+  // Função de logout — limpa autenticação do front
   function logout() {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -44,6 +48,7 @@ export function AuthProvider({ children }) {
     delete api.defaults.headers.common["Authorization"];
   }
 
+  // Torna user, login e logout acessíveis a toda a aplicação
   return (
     <AuthContext.Provider value={{ user, login, logout }}>
       {children}
