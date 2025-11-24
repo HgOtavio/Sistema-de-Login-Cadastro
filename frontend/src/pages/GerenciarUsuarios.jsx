@@ -216,8 +216,8 @@ export default function ManageUsers() {
           <div className="modal-box">
             <h2>Confirmar Deleção</h2>
             <p>
-              Você tem certeza que quer excluir o usuario?
-              {userToDelete === loggedUser.id && " Entre com a sua senha."}
+              
+              {userToDelete === loggedUser.id && " "}
             </p>
 
             {userToDelete === loggedUser.id && (

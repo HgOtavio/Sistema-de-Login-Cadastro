@@ -21,7 +21,18 @@ export default function Login() {
       await login(email, password);
       window.location.href = "/dashboard";
     } catch (err) {
-      setErrorMessage("Email ou senha incorretos");
+      if (err.response && err.response.data && err.response.data.error) {
+        const msg = err.response.data.error;
+        if (msg === "Usuário não encontrado") {
+          setErrorMessage("Email não cadastrado");
+        } else if (msg === "Senha incorreta") {
+          setErrorMessage("Senha incorreta");
+        } else {
+          setErrorMessage("Erro ao realizar login");
+        }
+      } else {
+        setErrorMessage("Erro de conexão");
+      }
     }
   }
 
@@ -30,12 +41,12 @@ export default function Login() {
       {errorMessage && <p className="error-message">{errorMessage}</p>}
       <div className="login-box">
         <h2>Login</h2>
-
         <form onSubmit={handleSubmit}>
           <input
             type="email"
             placeholder="Email"
             onChange={(e) => setEmail(e.target.value)}
+            value={email}
             required
           />
 
@@ -44,12 +55,14 @@ export default function Login() {
               type={showPassword ? "text" : "password"}
               placeholder="Senha"
               onChange={(e) => setPassword(e.target.value)}
+              value={password}
               required
             />
 
             <img
               src={showPassword ? EyeOpen : EyeClosed}
               className="passord-icon"
+              alt="Mostrar senha"
               onClick={() => setShowPassword(!showPassword)}
             />
           </div>

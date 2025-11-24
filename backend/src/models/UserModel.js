@@ -35,7 +35,7 @@ module.exports = {
     ], callback);
   },
 
-  // Atualiza nome e/ou senha (criptografada) e o timestamp
+  // Atualiza nome, senha e role (caso permitido)
   updateUser(id, user, callback) {
     let fields = [];
     let values = [];
@@ -49,6 +49,11 @@ module.exports = {
       const hash = bcrypt.hashSync(user.password, 10);
       fields.push("password = ?");
       values.push(hash);
+    }
+
+    if (user.role) {
+      fields.push("role = ?");
+      values.push(user.role);
     }
 
     fields.push("updated_at = ?");

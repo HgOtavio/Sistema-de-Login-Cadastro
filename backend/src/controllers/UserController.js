@@ -1,16 +1,13 @@
-// Importa o model de usuário, responsável por acessar o banco
 const User = require("../models/UserModel");
 
 module.exports = {
 
-  // Retorna todos os usuários do sistema
   list(req, res) {
     User.getAll((err, rows) => {
       return res.json(rows);
     });
   },
 
-  // Retorna um usuário específico pelo ID
   get(req, res) {
     User.getById(req.params.id, (err, row) => {
       if (!row) return res.status(404).json({ error: "Usuário não encontrado" });
@@ -18,15 +15,12 @@ module.exports = {
     });
   },
 
-  // Atualiza nome e/ou senha de um usuário
-  // - Admin pode editar qualquer usuário
-  // - Usuário comum só pode editar ele mesmo
   async update(req, res) {
     try {
       const { id } = req.params;
-      const { name, password } = req.body;
+      const { name, password, role } = req.body;
 
-      // Controle de permissão baseado no JWT
+      // Se não é admin e está tentando editar outro usuário -> bloqueia
       if (req.user.role !== "admin" && req.user.id != id) {
         return res.status(403).json({ error: "Sem permissão" });
       }
@@ -34,13 +28,24 @@ module.exports = {
       User.getById(id, (err, row) => {
         if (!row) return res.status(404).json({ error: "Usuário não encontrado" });
 
-        User.updateUser(id, { name, password }, (err) => {
-          if (err) {
-            console.log(err);
-            return res.status(500).json({ error: "Erro ao atualizar usuário" });
+        let newRole = role;
+
+        // Se NÃO é admin -> NÃO pode mudar role
+        if (req.user.role !== "admin") {
+          newRole = row.role;
+        }
+
+        User.updateUser(
+          id,
+          { name, password, role: newRole },
+          (err) => {
+            if (err) {
+              console.log(err);
+              return res.status(500).json({ error: "Erro ao atualizar usuário" });
+            }
+            return res.json({ message: "Usuário atualizado com sucesso" });
           }
-          return res.json({ message: "Usuário atualizado com sucesso" });
-        });
+        );
       });
 
     } catch (err) {
@@ -49,12 +54,17 @@ module.exports = {
     }
   },
 
-  // Remove um usuário do sistema
-  remove(req, res) {
-    User.remove(req.params.id, function(err) {
-      if (err) return res.status(500).json({ error: "Erro ao deletar" });
-      return res.json({ message: "Removido com sucesso" });
-    });
+remove(req, res) {
+  const userId = req.params.id;
+
+  if (req.user.role !== "admin" && req.user.id != userId) {
+    return res.status(403).json({ error: "Sem permissão para deletar este usuário" });
   }
+
+  User.remove(userId, function(err) {
+    if (err) return res.status(500).json({ error: "Erro ao deletar" });
+    return res.json({ message: "Removido com sucesso" });
+  });
+}
 
 };

@@ -17,6 +17,6 @@ router.get("/:id", auth, UserController.get);
 router.put("/:id", auth, UserController.update);
 
 // Remove um usuário — apenas admin pode deletar usuários
-router.delete("/:id", auth, admin, UserController.remove);
+router.delete("/:id", auth, UserController.remove);
 
 module.exports = router;
