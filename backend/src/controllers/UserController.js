@@ -15,26 +15,44 @@ module.exports = {
     });
   },
 
-  async update(req, res) {
-    try {
-      const { id } = req.params;
-      const { name, password, role } = req.body;
+ async update(req, res) {
+  try {
+    const { id } = req.params;
+    const { name, password, role, email } = req.body;
 
-      // Se não é admin e está tentando editar outro usuário -> bloqueia
-      if (req.user.role !== "admin" && req.user.id != id) {
-        return res.status(403).json({ error: "Sem permissão" });
+    if (req.user.role !== "admin" && req.user.id != id) {
+      return res.status(403).json({ error: "Sem permissão" });
+    }
+
+    User.getById(id, (err, userDb) => {
+      if (!userDb) return res.status(404).json({ error: "Usuário não encontrado" });
+
+      let newRole = role;
+      if (req.user.role !== "admin") {
+        newRole = userDb.role;
       }
 
-      User.getById(id, (err, row) => {
-        if (!row) return res.status(404).json({ error: "Usuário não encontrado" });
+      // VERIFICAR SE O EMAIL JÁ EXISTE
+      if (email) {
+        User.getByEmail(email, (err, userWithEmail) => {
+          if (userWithEmail && userWithEmail.id != id) {
+            return res.status(400).json({ error: "Este email já está em uso" });
+          }
 
-        let newRole = role;
-
-        // Se NÃO é admin -> NÃO pode mudar role
-        if (req.user.role !== "admin") {
-          newRole = row.role;
-        }
-
+          // SEGUE COM A ATUALIZAÇÃO
+          User.updateUser(
+            id,
+            { name, password, role: newRole, email },
+            (err) => {
+              if (err) {
+                console.log(err);
+                return res.status(500).json({ error: "Erro ao atualizar usuário" });
+              }
+              return res.json({ message: "Usuário atualizado com sucesso" });
+            }
+          );
+        });
+      } else {
         User.updateUser(
           id,
           { name, password, role: newRole },
@@ -46,13 +64,15 @@ module.exports = {
             return res.json({ message: "Usuário atualizado com sucesso" });
           }
         );
-      });
+      }
+    });
 
-    } catch (err) {
-      console.log(err);
-      res.status(500).json({ error: "Erro interno" });
-    }
-  },
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: "Erro interno" });
+  }
+}
+,
 
 remove(req, res) {
   const userId = req.params.id;

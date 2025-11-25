@@ -4,6 +4,10 @@ import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import EyeOpen from "../assets/images/eye-open.png";
 import EyeClosed from "../assets/images/eye-closed.png";
+import { useNavigate } from "react-router-dom";
+
+
+
 
 export default function ManageUsers() {
   const [users, setUsers] = useState([]);
@@ -16,6 +20,11 @@ export default function ManageUsers() {
   const [showPassword, setShowPassword] = useState(false);
 
   const loggedUser = JSON.parse(localStorage.getItem("user"));
+
+  const navigate = useNavigate();
+
+
+
 
   async function loadUsers() {
     try {
@@ -129,9 +138,41 @@ export default function ManageUsers() {
     );
   });
 
-  useEffect(() => {
+useEffect(() => {
+  const token = localStorage.getItem("token");
+  const userFromStorage = JSON.parse(localStorage.getItem("user"));
+
+  if (!token || !userFromStorage) {
+    toast.error("Você precisa estar logado.");
+    setTimeout(() => navigate("/"), 1200);
+    return;
+  }
+
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+
+    if (payload.id !== userFromStorage.id) {
+      toast.error("Token inválido para este usuário.");
+      setTimeout(() => navigate("/"), 1200);
+      return;
+    }
+
+    if (payload.role !== "admin") {
+      toast.error("Apenas administradores podem acessar.");
+      setTimeout(() => navigate("/dashboard-user"), 1200);
+      return;
+    }
+
+  
     loadUsers();
-  }, []);
+  } catch (err) {
+    toast.error("Erro ao validar token.");
+    setTimeout(() => navigate("/"), 1200);
+  }
+}, []); 
+
+
+
 
   return (
     <div className="manage-container">

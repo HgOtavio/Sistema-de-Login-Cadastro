@@ -1,13 +1,16 @@
 import { useContext, useEffect, useState } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 
 import "../assets/css/dashboard-admin.css";
 import EyeOpen from "../assets/images/eye-open.png";
 import EyeClosed from "../assets/images/eye-closed.png";
 
 export default function DashboardAdmin() {
-  const { user, logout } = useContext(AuthContext);
+  const { user,loadingUser, logout } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const [showModal, setShowModal] = useState(false);
@@ -17,6 +20,47 @@ export default function DashboardAdmin() {
   const [error, setError] = useState("");
 
   const SENHA_FIXA = "admin123"; 
+
+
+
+useEffect(() => {
+  const token = localStorage.getItem("token");
+
+  // Enquanto o user está carregando, não faz nada
+  if (loadingUser) return;
+
+  // Não tem token → login
+  if (!token) {
+    toast.error("Você precisa estar logado.");
+    setTimeout(() => navigate("/"), 1200);
+    return;
+  }
+
+
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+
+    if (!payload || payload.id !== user.id) {
+      toast.error("Token inválido ou expirado.");
+      setTimeout(() => navigate("/"), 1200);
+      return;
+    }
+
+    if (payload.role !== "admin") {
+      toast.error("Acesso restrito! Apenas administradores podem entrar.");
+      setTimeout(() => navigate("/dashboard-user"), 1200);
+      return;
+    }
+  } catch (error) {
+    toast.error("Erro ao validar credenciais.");
+    setTimeout(() => navigate("/"), 1200);
+    return;
+  }
+}, [user, loadingUser, navigate]);
+
+
+ 
+
 
   useEffect(() => {
     document.body.classList.add("dashboard-admin");

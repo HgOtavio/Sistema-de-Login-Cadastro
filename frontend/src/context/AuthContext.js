@@ -1,4 +1,3 @@
-// Contexto de autenticação no React — controla login, logout e estado global do usuário
 import { createContext, useState, useEffect } from "react";
 import api from "../services/api";
 
@@ -6,6 +5,7 @@ export const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
+  const [loadingUser, setLoadingUser] = useState(true); // <- flag de carregamento
 
   // Quando a página recarrega, mantém o usuário logado se houver token no localStorage
   useEffect(() => {
@@ -16,6 +16,8 @@ export function AuthProvider({ children }) {
       setUser(JSON.parse(storedUser));
       api.defaults.headers.common["Authorization"] = `Bearer ${storedToken}`;
     }
+
+    setLoadingUser(false); // <- terminou de carregar o usuário
   }, []);
 
   // Função que realiza login através da API — salva token e dados do usuário
@@ -48,9 +50,9 @@ export function AuthProvider({ children }) {
     delete api.defaults.headers.common["Authorization"];
   }
 
-  // Torna user, login e logout acessíveis a toda a aplicação
+  // Torna user, login, logout e loadingUser acessíveis a toda a aplicação
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, loadingUser, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

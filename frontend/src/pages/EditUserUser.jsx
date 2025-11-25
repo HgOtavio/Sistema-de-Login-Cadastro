@@ -4,14 +4,14 @@ import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "../assets/css/EditUserUser.css";
 
+
+
 import EyeOpen from "../assets/images/eye-open.png";
 import EyeClosed from "../assets/images/eye-closed.png";
 
 export default function EditUserUser() {
   const { id } = useParams();
   const navigate = useNavigate();
-
-  const loggedUser = JSON.parse(localStorage.getItem("user"));
 
   const [user, setUser] = useState({
     name: "",
@@ -24,18 +24,28 @@ export default function EditUserUser() {
   const [showPass1, setShowPass1] = useState(false);
   const [showPass2, setShowPass2] = useState(false);
 
-  // Verificação mega-power: logado + ID correto
+  //  VERIFICAÇÃO DE TOKEN / ID / PERMISSÃO
   useEffect(() => {
-    if (!loggedUser) {
-      toast.error("Você precisa estar logado.");
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      toast.error("Sessão expirada. Faça login novamente.");
       return navigate("/");
     }
 
-    if (loggedUser.role === "user" && parseInt(loggedUser.id) !== parseInt(id)) {
-      toast.error("Você não pode editar outro usuário!");
-      return navigate("/dashboard-user");
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+
+      // se não for admin → só pode editar ele mesmo
+      if (payload.role !== "admin" && payload.id !== parseInt(id)) {
+        toast.error("Você não pode editar outro usuário!");
+        return navigate("/dashboard-user");
+      }
+    } catch {
+      toast.error("Token inválido.");
+      return navigate("/");
     }
-  }, [id, loggedUser, navigate]);
+  }, [id, navigate]);
 
   // Carrega dados do usuário
   async function loadUser() {
@@ -74,58 +84,45 @@ export default function EditUserUser() {
   }
 
 
- async function handleUpdate(e) {
-  e.preventDefault();
+  async function handleUpdate(e) {
+    e.preventDefault();
 
-  try {
-    const lastUpdate = localStorage.getItem(`lastUpdate_${user.id}`);
-    const now = new Date().getTime();
-
-    if (lastUpdate) {
-      const diffHours = (now - parseInt(lastUpdate)) / (1000 * 60 * 60);
-      if (diffHours < 24) {
-        toast.error(`Você só pode atualizar suas informações a cada 24 horas. Tente novamente em ${Math.ceil(24 - diffHours)}h.`);
+    try {
+      if (user.password !== confirmPassword) {
+        toast.error("As senhas não coincidem!");
         return;
       }
+
+      const token = localStorage.getItem("token");
+      if (!token) {
+        toast.error("Token ausente. Faça login novamente.");
+        return navigate("/");
+      }
+
+      const res = await fetch(`http://localhost:3001/users/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + token,
+        },
+        body: JSON.stringify(user),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast.error(data.error || "Erro ao atualizar.");
+        return;
+      }
+
+      toast.success("Atualizado com sucesso!");
+      navigate("/dashboard-user");
+
+    } catch (err) {
+      console.error("Erro ao atualizar usuário:", err);
+      toast.error("Erro ao atualizar usuário. Tente novamente mais tarde.");
     }
-
-    if (user.password !== confirmPassword) {
-      toast.error("As senhas não coincidem!");
-      return;
-    }
-
-    const token = localStorage.getItem("token");
-    if (!token) {
-      toast.error("Token ausente. Faça login novamente.");
-      return navigate("/");
-    }
-
-    const res = await fetch(`http://localhost:3001/users/${id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + token,
-      },
-      body: JSON.stringify(user),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      toast.error(data.error || "Erro ao atualizar.");
-      return;
-    }
-
-    localStorage.setItem(`lastUpdate_${user.id}`, now.toString());
-
-    toast.success("Atualizado com sucesso!");
-    navigate("/dashboard-user");
-
-  } catch (err) {
-    console.error("Erro ao atualizar usuário:", err);
-    toast.error("Erro ao atualizar usuário. Tente novamente mais tarde.");
   }
-}
 
   useEffect(() => {
     loadUser();

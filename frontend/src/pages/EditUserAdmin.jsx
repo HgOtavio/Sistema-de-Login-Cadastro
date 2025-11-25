@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -19,13 +19,15 @@ export default function EditUser() {
     last_password_change: ""
   });
 
+  
+
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPass1, setShowPass1] = useState(false);
   const [showPass2, setShowPass2] = useState(false);
 
   const PASSWORD_LIMIT_DAYS = 30;
 
-  async function loadUser() {
+  const loadUser = useCallback(async () => {
     try {
       const res = await fetch(`http://localhost:3001/users/${id}`, {
         headers: {
@@ -51,11 +53,9 @@ export default function EditUser() {
     } catch (err) {
       toast.error("Erro ao carregar usuário.");
     }
-  }
+  }, [id]); 
 
   function validarSenha() {
-
-    // se o usuário não está alterando senha, não valida nada
     if (!user.password) return true;
 
     const nome = user.name.toLowerCase();
@@ -115,6 +115,13 @@ export default function EditUser() {
   async function handleUpdate(e) {
     e.preventDefault();
 
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+    if (!emailRegex.test(user.email)) {
+      toast.error("Email inválido! O email deve conter @ e um domínio válido (ex: .com)");
+      return;
+    }
+
     if (user.password) {
 
       if (!podeTrocarSenha()) {
@@ -165,9 +172,10 @@ export default function EditUser() {
     }
   }
 
+ 
   useEffect(() => {
     loadUser();
-  }, []);
+  }, [loadUser]);
 
   return (
     <div className="panel-container">
@@ -237,6 +245,7 @@ export default function EditUser() {
               />
               <img
                 src={showPass1 ? EyeOpen : EyeClosed}
+                alt=""
                 className="eye-icon"
                 onClick={() => setShowPass1(!showPass1)}
               />
@@ -254,6 +263,7 @@ export default function EditUser() {
               />
               <img
                 src={showPass2 ? EyeOpen : EyeClosed}
+                alt=""
                 className="eye-icon"
                 onClick={() => setShowPass2(!showPass2)}
               />

@@ -36,34 +36,40 @@ module.exports = {
   },
 
   // Atualiza nome, senha e role (caso permitido)
-  updateUser(id, user, callback) {
-    let fields = [];
-    let values = [];
+ updateUser(id, user, callback) {
+  let fields = [];
+  let values = [];
 
-    if (user.name) {
-      fields.push("name = ?");
-      values.push(user.name);
-    }
+  if (user.name) {
+    fields.push("name = ?");
+    values.push(user.name);
+  }
 
-    if (user.password) {
-      const hash = bcrypt.hashSync(user.password, 10);
-      fields.push("password = ?");
-      values.push(hash);
-    }
+  if (user.email) {
+    fields.push("email = ?");
+    values.push(user.email);
+  }
 
-    if (user.role) {
-      fields.push("role = ?");
-      values.push(user.role);
-    }
+  if (user.password) {
+    const hash = bcrypt.hashSync(user.password, 10);
+    fields.push("password = ?");
+    values.push(hash);
+  }
 
-    fields.push("updated_at = ?");
-    values.push(new Date().toISOString());
+  if (user.role) {
+    fields.push("role = ?");
+    values.push(user.role);
+  }
 
-    const sql = `UPDATE users SET ${fields.join(", ")} WHERE id = ?`;
-    values.push(id);
+  fields.push("updated_at = ?");
+  values.push(new Date().toISOString());
 
-    db.run(sql, values, callback);
-  },
+  const sql = `UPDATE users SET ${fields.join(", ")} WHERE id = ?`;
+  values.push(id);
+
+  db.run(sql, values, callback);
+},
+
 
   // Remove usuário do banco
   remove(id, callback) {
