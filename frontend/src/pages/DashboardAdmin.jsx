@@ -19,7 +19,7 @@ export default function DashboardAdmin() {
   const [route, setRoute] = useState("");
   const [error, setError] = useState("");
 
-  const SENHA_FIXA = "admin123"; 
+const SENHA_FIXA = process.env.REACT_APP_ADMIN_PASS;
 
 
 

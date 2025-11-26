@@ -2,7 +2,7 @@
 // - Admin pode acessar qualquer ID
 // - Usuário comum só pode acessar o próprio ID
 const jwt = require("jsonwebtoken");
-const SECRET = process.env.JWT_SECRET || "minha-chave-secreta";
+const SECRET = process.env.JWT_SECRET ;
 
 module.exports = function checkUserPermission(req, res, next) {
   const authHeader = req.headers.authorization;
