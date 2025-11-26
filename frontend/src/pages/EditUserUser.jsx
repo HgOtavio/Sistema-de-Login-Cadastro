@@ -156,7 +156,6 @@ export default function EditUserUser() {
             <input
               type="email"
               value={user.email}
-              readOnly
               className="user-input"
             />
           </div>

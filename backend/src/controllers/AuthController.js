@@ -18,14 +18,40 @@ module.exports = {
     }
 
     // email precisa ser válido
-    if (!email.includes("@") || !email.includes(".")) {
-      return res.status(400).json({ error: "Email inválido" });
-    }
+   const parts = email.split(".");
+const lastPart = parts[parts.length - 1];
+
+if (lastPart.length < 2) {
+  return res.status(400).json({ error: "Domínio inválido no email" });
+}
+
 
     // senha mínima
-    if (password.length < 4) {
-      return res.status(400).json({ error: "A senha deve ter no mínimo 4 caracteres" });
-    }
+
+if (password.length < 12) {
+  return res.status(400).json({ error: "Senha fraca — mínimo 12 caracteres!" });
+}
+
+// pelo menos 1 maiúscula
+if (!/[A-Z]/.test(password)) {
+  return res.status(400).json({ error: "Senha precisa ter pelo menos 1 letra maiúscula!" });
+}
+
+// pelo menos 1 minúscula
+if (!/[a-z]/.test(password)) {
+  return res.status(400).json({ error: "Senha precisa ter pelo menos 1 letra minúscula!" });
+}
+
+// pelo menos 1 número
+if (!/[0-9]/.test(password)) {
+  return res.status(400).json({ error: "Senha precisa ter pelo menos 1 número!" });
+}
+
+// pelo menos 1 símbolo
+if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) {
+  return res.status(400).json({ error: "Senha precisa ter pelo menos 1 caractere especial!" });
+}
+
 
     UserRepository.getByEmail(email, (err, userExist) => {
       if (err) {
