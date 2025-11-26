@@ -2,6 +2,8 @@
 const express = require("express");
 const cors = require("cors");
 const routes = require("./routes");
+require("dotenv").config();
+
 
 const app = express();
 
@@ -20,6 +22,7 @@ app.get("/", (req, res) => {
 });
 
 // Inicia o servidor na porta 3001
-app.listen(3001, () => {
-  console.log("Servidor rodando na porta 3001");
+app.listen(process.env.PORT, () => {
+  console.log("Servidor rodando na porta", process.env.PORT);
 });
+

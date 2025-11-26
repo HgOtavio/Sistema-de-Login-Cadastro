@@ -1,5 +1,15 @@
+require("dotenv").config();
 const sqlite3 = require("sqlite3").verbose();
-const db = new sqlite3.Database("./src/database/database.sqlite");
+
+const db = new sqlite3.Database(process.env.DB_PATH, (err) => {
+  if (err) {
+    console.error(" Erro ao conectar no banco SQLite:", err);
+  } else {
+    console.log(" Conectado ao banco:", process.env.DB_PATH);
+  }
+});
+
+
 
 db.serialize(() => {
   db.run(`
