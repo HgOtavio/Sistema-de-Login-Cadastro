@@ -1,13 +1,20 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://localhost:3001",
+  baseURL: process.env.REACT_APP_API_URL  // fallback
 });
 
-
+// Intercepta TODAS as requisições e injeta o token
 api.interceptors.request.use((config) => {
-  console.log(" Enviando requisição para:", config.url);
-  console.log(" Token enviado:", config.headers.Authorization);
+  const token = localStorage.getItem("token"); // pega token do login
+  
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+
+  console.log(" Endpoint:", config.url);
+  console.log(" Token:", token ? "(enviado)" : "(ausente)");
+
   return config;
 });
 

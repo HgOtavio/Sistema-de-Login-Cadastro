@@ -1,16 +1,16 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { decodeId } from "../utils/cryptoId";
 import "react-toastify/dist/ReactToastify.css";
 import "../assets/css/EditUserUser.css";
-
-
 
 import EyeOpen from "../assets/images/eye-open.png";
 import EyeClosed from "../assets/images/eye-closed.png";
 
 export default function EditUserUser() {
-  const { id } = useParams();
+  const { id: encryptedId } = useParams();
+  const realId = decodeId(encryptedId);
   const navigate = useNavigate();
 
   const [user, setUser] = useState({
@@ -24,8 +24,13 @@ export default function EditUserUser() {
   const [showPass1, setShowPass1] = useState(false);
   const [showPass2, setShowPass2] = useState(false);
 
-  //  VERIFICAÇÃO DE TOKEN / ID / PERMISSÃO
+  //  Verificação de Token / Permissão / ID
   useEffect(() => {
+    if (!realId) {
+      toast.error("ID inválido ou adulterado!");
+      return navigate("/dashboard-user");
+    }
+
     const token = localStorage.getItem("token");
 
     if (!token) {
@@ -36,8 +41,7 @@ export default function EditUserUser() {
     try {
       const payload = JSON.parse(atob(token.split(".")[1]));
 
-      // se não for admin → só pode editar ele mesmo
-      if (payload.role !== "admin" && payload.id !== parseInt(id)) {
+      if (payload.role !== "admin" && payload.id !== parseInt(realId)) {
         toast.error("Você não pode editar outro usuário!");
         return navigate("/dashboard-user");
       }
@@ -45,7 +49,7 @@ export default function EditUserUser() {
       toast.error("Token inválido.");
       return navigate("/");
     }
-  }, [id, navigate]);
+  }, [realId, navigate]);
 
   // Carrega dados do usuário
   async function loadUser() {
@@ -56,7 +60,7 @@ export default function EditUserUser() {
         return navigate("/");
       }
 
-      const res = await fetch(`http://localhost:3001/users/${id}`, {
+      const res = await fetch(`http://localhost:3001/users/${realId}`, {
         headers: {
           Authorization: "Bearer " + token,
         },
@@ -83,7 +87,6 @@ export default function EditUserUser() {
     }
   }
 
-
   async function handleUpdate(e) {
     e.preventDefault();
 
@@ -99,7 +102,7 @@ export default function EditUserUser() {
         return navigate("/");
       }
 
-      const res = await fetch(`http://localhost:3001/users/${id}`, {
+      const res = await fetch(`http://localhost:3001/users/${realId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -157,6 +160,7 @@ export default function EditUserUser() {
               type="email"
               value={user.email}
               className="user-input"
+              disabled
             />
           </div>
 

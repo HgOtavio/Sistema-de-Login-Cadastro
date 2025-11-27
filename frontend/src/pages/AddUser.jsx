@@ -10,7 +10,7 @@ import EyeOpen from "../assets/images/eye-open.png";
 import EyeClosed from "../assets/images/eye-closed.png";
 
 export default function AddUser() {
-  const { user } = useContext(AuthContext);
+const { user, loadingUser } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const [name, setName] = useState("");
@@ -31,11 +31,15 @@ export default function AddUser() {
     return;
   }
 
-  if (!user) {
-    toast.error("Sessão expirada ou inválida.");
-    setTimeout(() => navigate("/"), 1200);
-    return;
-  }
+if (loadingUser) return;
+
+if (!user) {
+  toast.error("Sessão expirada.");
+  setTimeout(() => navigate("/"), 1200);
+  return;
+}
+
+
 
   try {
     const payload = JSON.parse(atob(token.split(".")[1]));

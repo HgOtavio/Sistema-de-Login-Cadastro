@@ -3,6 +3,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "../assets/css/EditUser.css";
+import { decodeId } from "../utils/cryptoId";
+
 
 import EyeOpen from "../assets/images/eye-open.png";
 import EyeClosed from "../assets/images/eye-closed.png";
@@ -27,33 +29,41 @@ export default function EditUser() {
 
   const PASSWORD_LIMIT_DAYS = 30;
 
-  const loadUser = useCallback(async () => {
-    try {
-      const res = await fetch(`http://localhost:3001/users/${id}`, {
-        headers: {
-          Authorization: "Bearer " + localStorage.getItem("token"),
-        },
-      });
+const loadUser = useCallback(async () => {
+  try {
+    const realId = decodeId(id);
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        toast.error(data.error || "Erro ao carregar usuário.");
-        return;
-      }
-
-      setUser({
-        name: data.name,
-        email: data.email,
-        role: data.role,
-        password: "",
-        last_password_change: data.last_password_change
-      });
-
-    } catch (err) {
-      toast.error("Erro ao carregar usuário.");
+    if (!realId) {
+      toast.error("ID inválido ou corrompido.");
+      return;
     }
-  }, [id]); 
+
+    const res = await fetch(`http://localhost:3001/users/${realId}`, {
+      headers: {
+        Authorization: "Bearer " + localStorage.getItem("token"),
+      },
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      toast.error(data.error || "Erro ao carregar usuário.");
+      return;
+    }
+
+    setUser({
+      name: data.name,
+      email: data.email,
+      role: data.role,
+      password: "",
+      last_password_change: data.last_password_change
+    });
+
+  } catch (err) {
+    toast.error("Erro ao carregar usuário.");
+  }
+}, [id]);
+
 
   function validarSenha() {
     if (!user.password) return true;
@@ -147,15 +157,22 @@ export default function EditUser() {
       sendData.password = user.password;
     }
 
-    try {
-      const res = await fetch(`http://localhost:3001/users/${id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + localStorage.getItem("token"),
-        },
-        body: JSON.stringify(sendData),
-      });
+try {
+  const realId = decodeId(id);
+
+  if (!realId) {
+    toast.error("ID inválido.");
+    return;
+  }
+
+  const res = await fetch(`http://localhost:3001/users/${realId}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + localStorage.getItem("token"),
+    },
+    body: JSON.stringify(sendData),
+  });
 
       const data = await res.json();
 

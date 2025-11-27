@@ -1,5 +1,6 @@
 import { createContext, useState, useEffect } from "react";
 import api from "../services/api";
+import { jwtDecode } from "jwt-decode";
 
 export const AuthContext = createContext();
 
@@ -12,8 +13,18 @@ export function AuthProvider({ children }) {
     const storedToken = localStorage.getItem("token");
 
     if (storedUser && storedToken) {
-      setUser(JSON.parse(storedUser));
-      api.defaults.headers.common["Authorization"] = `Bearer ${storedToken}`;
+      try {
+        const parsedUser = JSON.parse(storedUser);
+
+        setUser(parsedUser);
+        api.defaults.headers.common["Authorization"] = `Bearer ${storedToken}`;
+
+      } catch (err) {
+        console.error("Erro ao ler dados do localStorage:", err);
+        localStorage.removeItem("user");
+        localStorage.removeItem("token");
+        setUser(null);
+      }
     }
 
     setLoadingUser(false);
@@ -23,24 +34,39 @@ export function AuthProvider({ children }) {
     try {
       const response = await api.post("/auth/login", { email, password });
 
-      const { token, user: userData } = response.data;
+      const token = response.data.data;
+      if (!token) throw new Error("Token inválido recebido do servidor");
 
-      // Salva dados no localStorage
+      // decodifica payload do JWT
+      const decoded = jwtDecode(token);
+
+      if (!decoded.id || !decoded.role) {
+        throw new Error("JWT não contém ID ou ROLE");
+      }
+
+      // Agora inclui NAME + EMAIL
+      const userData = {
+        id: decoded.id,
+        role: decoded.role,
+        name: decoded.name,
+        email: decoded.email,
+      };
+
+      // salva no localStorage
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(userData));
 
-      // Define token no axios
+      // seta header padrão
       api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
-      // Atualiza estado
       setUser(userData);
 
       return { success: true, user: userData };
 
     } catch (error) {
+      console.error("Erro no login:", error);
 
-      // CASO API RETORNE ERRO JSON
-      if (error.response && error.response.data && error.response.data.error) {
+      if (error.response?.data?.error) {
         return { success: false, error: error.response.data.error };
       }
 

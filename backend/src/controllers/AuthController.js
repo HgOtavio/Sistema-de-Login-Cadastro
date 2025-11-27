@@ -10,6 +10,11 @@ module.exports = {
   // Função de cadastro: cria usuário se o email não estiver cadastrado
  register(req, res) {
   try {
+     if (!req.body || Object.keys(req.body).length === 0) {
+      return res.status(400).json({ 
+        error: "É necessário enviar os dados no corpo da requisição como JSON, usando chaves {}" 
+      });
+    }
     const { name, email, password, role } = req.body;
 
     // validação de entrada
@@ -92,25 +97,31 @@ if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) {
 },
 
   // Função de login: valida credenciais e gera token JWT com cargo e ID
-  login(req, res) {
-    const { email, password } = req.body;
+login(req, res) {
+  const { email, password } = req.body;
 
-    UserRepository.getByEmail(email, (err, userDb) => {
-      if (!userDb) return res.status(400).json({ error: "Usuário não encontrado" });
+  UserRepository.getByEmail(email, (err, userDb) => {
+    if (!userDb) return res.status(400).json({ error: "Usuário não encontrado" });
 
-      const isValid = bcrypt.compareSync(password, userDb.password);
+    const isValid = bcrypt.compareSync(password, userDb.password);
+    if (!isValid) return res.status(401).json({ error: "Senha incorreta" });
 
-      if (!isValid) return res.status(401).json({ error: "Senha incorreta" });
+    // ENVIANDO TAMBÉM name + email NO TOKEN
+    const payload = {
+      id: userDb.id,
+      role: userDb.role,
+      name: userDb.name,
+      email: userDb.email
+    };
 
-      const token = jwt.sign(
-        { id: userDb.id, role: userDb.role },
-        SECRET,
-        { expiresIn: "1d" }
-      );
+    const encrypted = jwt.sign(payload, SECRET, { expiresIn: "1d" });
 
-      delete userDb.password;
-
-      return res.json({ token, user: userDb });
+    return res.json({
+      data: encrypted
     });
-  }
+  });
+}
+
+
+
 };

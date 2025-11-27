@@ -3,13 +3,24 @@ const db = require("../database/init");
 const bcrypt = require("bcryptjs");
 
 module.exports = {
-
   getAll(callback) {
     db.all("SELECT * FROM users", [], callback);
   },
 
   getById(id, callback) {
     db.get("SELECT * FROM users WHERE id = ?", [id], callback);
+  },
+
+  // NOVA FUNÇÃO: retorna múltiplos usuários pelo array de IDs
+  getByIds(ids, callback) {
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return callback(null, []);
+    }
+
+    const placeholders = ids.map(() => "?").join(","); // ?,?,?
+    const sql = `SELECT * FROM users WHERE id IN (${placeholders})`;
+
+    db.all(sql, ids, callback);
   },
 
   getByEmail(email, callback) {
@@ -21,14 +32,11 @@ module.exports = {
       INSERT INTO users (name, email, password, role, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?, ?)
     `;
-    db.run(sql, [
-      user.name,
-      user.email,
-      user.password,
-      user.role,
-      user.created_at,
-      user.updated_at
-    ], callback);
+    db.run(
+      sql,
+      [user.name, user.email, user.password, user.role, user.created_at, user.updated_at],
+      callback
+    );
   },
 
   updateUser(id, user, callback) {
@@ -67,5 +75,5 @@ module.exports = {
 
   remove(id, callback) {
     db.run("DELETE FROM users WHERE id = ?", [id], callback);
-  }
+  },
 };

@@ -5,6 +5,8 @@ import "react-toastify/dist/ReactToastify.css";
 import EyeOpen from "../assets/images/eye-open.png";
 import EyeClosed from "../assets/images/eye-closed.png";
 import { useNavigate } from "react-router-dom";
+import { encodeId } from "../utils/cryptoId";
+
 
 
 
@@ -121,8 +123,10 @@ export default function ManageUsers() {
   }
 
   function editUser(id) {
-    window.location.href = `/editar-usuario/${id}`;
-  }
+  const idCripto = encodeId(id);
+  navigate(`/editar-usuario/${idCripto}`);
+}
+
 
   function addNewUser() {
     window.location.href = "/add-user";

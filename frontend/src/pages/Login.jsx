@@ -7,6 +7,7 @@ import EyeClosed from "../assets/images/eye-closed.png";
 
 export default function Login() {
   const { login } = useContext(AuthContext);
+  
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -26,7 +27,7 @@ async function handleSubmit(e) {
     console.log("Token no localStorage:", token);
     console.log("Usuário no localStorage:", user);
 
-    window.location.href = "/dashboard";
+      window.location.href = "/dashboard";
   } catch (err) {
     if (err.response && err.response.data && err.response.data.error) {
       const msg = err.response.data.error;

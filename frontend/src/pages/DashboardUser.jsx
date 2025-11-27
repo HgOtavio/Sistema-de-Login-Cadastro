@@ -4,6 +4,9 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
+import { encodeId } from "../utils/cryptoId";
+
+
 import "../assets/css/dashboard-user.css";
 
 import EyeOpen from "../assets/images/eye-open.png";
@@ -160,12 +163,13 @@ useEffect(() => {
           Olá, {user.name.split(" ").slice(0, 2).join(" ")}
         </h1>
 
-        <button
-          className="user-edit-btn"
-          onClick={() => navigate(`/editar-meu-perfil/${user.id}`)}
-        >
-          Editar minhas Informações
-        </button>
+       <button
+  className="user-edit-btn"
+  onClick={() => navigate(`/editar-meu-perfil/${encodeId(user.id)}`)}
+>
+  Editar minhas Informações
+</button>
+
 
         <button className="deldelte" onClick={() => setShowModal(true)}>
           Excluir minha conta
