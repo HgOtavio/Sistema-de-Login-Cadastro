@@ -1,6 +1,7 @@
 // Importa o model e o repositório
 const User = require("../models/UserModel");
 const UserRepository = require("../database/UserRepository");
+const { sendResetEmail } = require("../services/emailService");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const SECRET = process.env.JWT_SECRET;
@@ -96,6 +97,7 @@ if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) {
   }
 },
 
+// Função de login: valida credenciais e gera token JWT com cargo e ID
   // Função de login: valida credenciais e gera token JWT com cargo e ID
 login(req, res) {
   const { email, password } = req.body;
@@ -120,7 +122,102 @@ login(req, res) {
       data: encrypted
     });
   });
+},
+
+
+forgotPassword(req, res) {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: "Email é obrigatório" });
+
+    UserRepository.getByEmail(email, (err, user) => {
+      try {
+        if (err) {
+          console.error("Erro ao buscar usuário:", err);
+          return res.status(500).json({ error: "Erro no servidor" });
+        }
+        if (!user) return res.status(404).json({ error: "Usuário não encontrado" });
+
+        const token = Math.floor(100000 + Math.random() * 900000).toString();
+
+        UserRepository.saveResetToken(email, token, (err) => {
+          try {
+            if (err) {
+              console.error("Erro ao salvar token no banco:", err);
+              return res.status(500).json({ error: "Erro ao salvar token" });
+            }
+
+            sendResetEmail(email, token)
+              .then(() => res.json({ message: "Código enviado para seu email" }))
+              .catch(emailError => {
+                console.error("Erro ao enviar email:", emailError);
+                return res.status(500).json({
+                  error: "Erro ao enviar email",
+                  detalhes: emailError.message || emailError
+                });
+              });
+
+          } catch (innerErr) {
+            console.error("Erro interno no saveResetToken:", innerErr);
+            return res.status(500).json({ error: "Erro interno no servidor" });
+          }
+        });
+
+      } catch (innerErr2) {
+        console.error("Erro interno ao processar forgotPassword:", innerErr2);
+        return res.status(500).json({ error: "Erro interno no servidor" });
+      }
+    });
+
+  } catch (error) {
+    console.error("Erro crítico no forgotPassword:", error);
+    return res.status(500).json({ error: "Erro interno no servidor" });
+  }
+},
+resetPassword(req, res) {
+  try {
+    const { email, token, password } = req.body;
+
+    console.log("=== RESET PASSWORD RECEBIDO ===", password);
+
+    if (!email || !token || !password) {
+      return res.status(400).json({ error: "Todos os campos são obrigatórios" });
+    }
+
+    // regras iguais ao REGISTER
+    if (password.length < 12) return res.status(400).json({ error: "Senha fraca — mínimo 12 caracteres!" });
+    if (!/[A-Z]/.test(password)) return res.status(400).json({ error: "Senha precisa ter pelo menos 1 letra maiúscula!" });
+    if (!/[a-z]/.test(password)) return res.status(400).json({ error: "Senha precisa ter pelo menos 1 letra minúscula!" });
+    if (!/[0-9]/.test(password)) return res.status(400).json({ error: "Senha precisa ter pelo menos 1 número!" });
+    if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) return res.status(400).json({ error: "Senha precisa ter pelo menos 1 caractere especial!" });
+
+    UserRepository.validateResetToken(email, token, (err, valid) => {
+      if (err) return res.status(500).json({ error: "Erro ao processar token" });
+      if (!valid) return res.status(400).json({ error: "Token inválido" });
+
+      UserRepository.getByEmail(email, (err, userDb) => {
+        if (err || !userDb) return res.status(404).json({ error: "Usuário não encontrado" });
+
+        // HASH CORRETO
+        const hashedPassword = bcrypt.hashSync(password, 10);
+
+        UserRepository.updateUserPassword(userDb.id, hashedPassword, (err) => {
+          if (err) return res.status(500).json({ error: "Erro ao atualizar senha" });
+
+          console.log("✔ SENHA ALTERADA CORRETAMENTE NO BANCO!");
+
+          return res.json({ message: "Senha alterada com sucesso!" });
+        });
+
+      });
+    });
+
+  } catch (error) {
+    console.error("❗ ERRO CRÍTICO NO resetPassword:", error);
+    return res.status(500).json({ error: "Erro interno no servidor" });
+  }
 }
+
 
 
 

@@ -44,60 +44,78 @@ module.exports = {
 },
 
   async update(req, res) {
-    try {
-      const { id } = req.params;
-      const { name, password, role, email } = req.body;
+  try {
+    const { id } = req.params;
 
-      if (req.user.role !== "admin" && req.user.id != id) {
-        return res.status(403).json({ error: "Sem permissão" });
+    // Verificação se o body possui chaves JSON "{}"
+    if (!req.body || typeof req.body !== "object") {
+      return res.status(400).json({ error: "Body JSON inválido ou ausente. Use { }" });
+    }
+
+    const { name, password, role, email } = req.body;
+
+    console.log(" JSON RECEBIDO:", req.body);
+
+    if (req.user.role !== "admin" && req.user.id != id) {
+      return res.status(403).json({ error: "Sem permissão" });
+    }
+
+    UserRepository.getById(id, (err, userDb) => {
+
+      if (err) {
+        console.log(" Erro DB:", err);
+        return res.status(500).json({ error: "Erro no banco ao buscar usuário" });
       }
 
-      UserRepository.getById(id, (err, userDb) => {
-        if (!userDb) return res.status(404).json({ error: "Usuário não encontrado" });
+      if (!userDb) {
+        return res.status(404).json({ error: "Usuário não encontrado" });
+      }
 
-        let newRole = role;
-        if (req.user.role !== "admin") {
-          newRole = userDb.role;
-        }
+      let newRole = role;
+      if (req.user.role !== "admin") newRole = userDb.role;
 
-        if (email) {
-          UserRepository.getByEmail(email, (err, userWithEmail) => {
-            if (userWithEmail && userWithEmail.id != id) {
-              return res.status(400).json({ error: "Este email já está em uso" });
+      if (email) {
+        UserRepository.getByEmail(email, (err, userWithEmail) => {
+
+          if (err) {
+            console.log(" Erro DB:", err);
+            return res.status(500).json({ error: "Erro no banco ao validar email" });
+          }
+
+          if (userWithEmail && userWithEmail.id != id) {
+            return res.status(400).json({ error: "Este email já está em uso" });
+          }
+
+          return atualizarUser();
+        });
+      } else {
+        return atualizarUser();
+      }
+
+      function atualizarUser() {
+        UserRepository.updateUser(
+          id,
+          { name, password, role: newRole, email },
+          (err) => {
+
+            if (err) {
+              console.log(" Erro DB ao atualizar:", err);
+              return res.status(500).json({ error: "Erro ao atualizar usuário" });
             }
 
-            UserRepository.updateUser(
-              id,
-              { name, password, role: newRole, email },
-              (err) => {
-                if (err) {
-                  console.log(err);
-                  return res.status(500).json({ error: "Erro ao atualizar usuário" });
-                }
-                return res.json({ message: "Usuário atualizado com sucesso" });
-              }
-            );
-          });
-        } else {
-          UserRepository.updateUser(
-            id,
-            { name, password, role: newRole },
-            (err) => {
-              if (err) {
-                console.log(err);
-                return res.status(500).json({ error: "Erro ao atualizar usuário" });
-              }
-              return res.json({ message: "Usuário atualizado com sucesso" });
-            }
-          );
-        }
-      });
+            return res.json({ message: "Usuário atualizado com sucesso!" });
+          }
+        );
+      }
 
-    } catch (err) {
-      console.log(err);
-      res.status(500).json({ error: "Erro interno" });
-    }
-  },
+    });
+
+  } catch (err) {
+    console.log(" ERRO GERAL:", err);
+    return res.status(500).json({ error: "Erro interno" });
+  }
+},
+
 
 remove(req, res) {
   try {
@@ -153,6 +171,7 @@ remove(req, res) {
     return res.status(500).json({ error: "Erro interno no servidor" });
   }
 }
+
 
 
 };

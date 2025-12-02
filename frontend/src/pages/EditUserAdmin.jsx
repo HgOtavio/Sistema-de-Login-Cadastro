@@ -50,13 +50,14 @@ const loadUser = useCallback(async () => {
       toast.error(data.error || "Erro ao carregar usuário.");
       return;
     }
+     const userData = data[0]; // pega o primeiro objeto do array
 
     setUser({
-      name: data.name,
-      email: data.email,
-      role: data.role,
+      name: userData.name,
+      email: userData.email,
+      role: userData.role,
       password: "",
-      last_password_change: data.last_password_change
+      last_password_change: userData.last_password_change
     });
 
   } catch (err) {

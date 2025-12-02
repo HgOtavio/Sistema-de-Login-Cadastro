@@ -80,6 +80,8 @@ async function handleSubmit(e) {
         </form>
 
         <a href="/register">Criar conta</a>
+        <a href="/forgot-password">Esqueci minha senha</a>
+
       </div>
     </div>
   );

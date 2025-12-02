@@ -11,6 +11,7 @@ import EyeClosed from "../assets/images/eye-closed.png";
 export default function EditUserUser() {
   const { id: encryptedId } = useParams();
   const realId = decodeId(encryptedId);
+  console.log("realId decodificado:", realId);
   const navigate = useNavigate();
 
   const [user, setUser] = useState({
@@ -30,6 +31,7 @@ export default function EditUserUser() {
       toast.error("ID inválido ou adulterado!");
       return navigate("/dashboard-user");
     }
+    
 
     const token = localStorage.getItem("token");
 
@@ -38,8 +40,11 @@ export default function EditUserUser() {
       return navigate("/");
     }
 
-    try {
-      const payload = JSON.parse(atob(token.split(".")[1]));
+    console.log("Token:", token);
+try {
+  const payload = JSON.parse(atob(token.split(".")[1]));
+  console.log("Payload do token:", payload);
+
 
       if (payload.role !== "admin" && payload.id !== parseInt(realId)) {
         toast.error("Você não pode editar outro usuário!");
@@ -65,20 +70,31 @@ export default function EditUserUser() {
           Authorization: "Bearer " + token,
         },
       });
+      console.log("Resposta do fetch:", res);
+
 
       const data = await res.json();
+      console.log("Dados do usuário retornados:", data);
+
 
       if (!res.ok) {
         toast.error(data.error || "Erro ao carregar usuário.");
         return navigate("/dashboard-user");
       }
 
-      setUser({
-        name: data.name || "",
-        email: data.email || "",
-        password: "",
-        role: data.role || "user"
-      });
+     const userData = data[0]; // pega o primeiro objeto do array
+setUser({
+  name: userData.name || "",
+  email: userData.email || "",
+  password: "",
+  role: userData.role || "user"
+});
+console.log("Estado do user atualizado:", {
+  name: userData.name || "",
+  email: userData.email || "",
+  password: "",
+  role: userData.role || "user"
+});
 
     } catch (err) {
       console.error("Erro ao carregar usuário:", err);
@@ -148,12 +164,13 @@ export default function EditUserUser() {
 
           <div className="user-left-column">
             <label className="user-input-label">Nome</label>
-            <input
-              type="text"
-              value={user.name}
-              onChange={(e) => setUser({ ...user, name: e.target.value })}
-              className="user-input"
-            />
+          <input
+  type="text"
+  value={user.name || ""}
+  onChange={(e) => setUser({ ...user, name: e.target.value })}
+  className="user-input"
+/>
+
 
             <label className="user-input-label">Email</label>
             <input

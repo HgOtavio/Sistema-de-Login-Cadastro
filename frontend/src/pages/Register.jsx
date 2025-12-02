@@ -80,6 +80,7 @@ export default function Register() {
       toast.error("As senhas não conferem!");
       return;
     }
+    
 
     try {
       const response = await api.post("/auth/register", {
