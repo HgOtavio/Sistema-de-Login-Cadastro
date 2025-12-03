@@ -4,6 +4,7 @@ const UserRepository = require("../database/UserRepository");
 const { sendResetEmail } = require("../services/emailService");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const { verifyCaptcha } = require("../utils/captcha");
 const SECRET = process.env.JWT_SECRET;
 
 module.exports = {
@@ -127,59 +128,104 @@ login(req, res) {
 
 forgotPassword(req, res) {
   try {
-    const { email } = req.body;
+    const { email, captchaToken } = req.body;
+    
+
+
     if (!email) return res.status(400).json({ error: "Email é obrigatório" });
+    
+// VALIDAÇÃO DO FORMATO DO EMAIL
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+if (!emailRegex.test(email)) {
+  return res.status(400).json({ error: "Email inválido" });
+}
 
-    UserRepository.getByEmail(email, (err, user) => {
-      try {
-        if (err) {
-          console.error("Erro ao buscar usuário:", err);
-          return res.status(500).json({ error: "Erro no servidor" });
+
+    if (!captchaToken) return res.status(400).json({ error: "Captcha obrigatório" });
+
+    verifyCaptcha(captchaToken, req.ip)
+      .then(captchaRes => {
+
+        if (!captchaRes.success) {
+          return res.status(400).json({ error: "Falha na verificação — marque 'Não sou robô'" });
         }
-        if (!user) return res.status(404).json({ error: "Usuário não encontrado" });
 
-        const token = Math.floor(100000 + Math.random() * 900000).toString();
-
-        UserRepository.saveResetToken(email, token, (err) => {
+        UserRepository.getByEmail(email, (err, user) => {
           try {
             if (err) {
-              console.error("Erro ao salvar token no banco:", err);
-              return res.status(500).json({ error: "Erro ao salvar token" });
+              console.error(" Erro ao buscar usuário:", err);
+              return res.status(500).json({ error: "Erro no servidor" });
             }
 
-            sendResetEmail(email, token)
-              .then(() => res.json({ message: "Código enviado para seu email" }))
-              .catch(emailError => {
-                console.error("Erro ao enviar email:", emailError);
-                return res.status(500).json({
-                  error: "Erro ao enviar email",
-                  detalhes: emailError.message || emailError
+            // resposta padrão — segurança
+            if (!user) {
+              return res.json({ message: "Se o email existir, enviaremos o código." });
+            }
+
+            // verifica se já existe token válido
+            UserRepository.checkExistingValidToken(email, (err, exists) => {
+              if (err) {
+                return res.status(500).json({ error: "Erro no servidor" });
+              }
+
+
+              if (exists) {
+                return res.json({ 
+                  message: "Um código já foi enviado recentemente. Verifique seu email." 
                 });
+              }
+
+              // gera token de 6 dígitos
+              const token = Math.floor(100000 + Math.random() * 900000).toString();
+              
+
+              UserRepository.saveResetToken(email, token, (err, result) => {
+                if (err) {
+                  console.error(" Erro ao salvar token no banco:", err);
+                  return res.status(500).json({ error: "Erro ao salvar token" });
+                }
+
+           
+
+                sendResetEmail(email, token)
+                  .then(() => {
+                    return res.json({ message: "Se o email existir, enviaremos o código." });
+                  })
+                  .catch(emailError => {
+                    console.error(" ERRO AO ENVIAR EMAIL:");
+                    console.error("MESSAGE:", emailError.message);
+                    console.error("STACK:", emailError.stack);
+                    console.error("FULL:", emailError);
+                    return res.status(500).json({ error: "Erro ao enviar email" });
+                  });
               });
+            });
 
           } catch (innerErr) {
-            console.error("Erro interno no saveResetToken:", innerErr);
+            console.error("Erro interno no forgotPassword:", innerErr);
             return res.status(500).json({ error: "Erro interno no servidor" });
           }
         });
-
-      } catch (innerErr2) {
-        console.error("Erro interno ao processar forgotPassword:", innerErr2);
-        return res.status(500).json({ error: "Erro interno no servidor" });
-      }
-    });
+      })
+      .catch(err => {
+        console.error("Erro ao validar captcha:", err);
+        return res.status(500).json({ error: "Falha na verificação do captcha" });
+      });
 
   } catch (error) {
-    console.error("Erro crítico no forgotPassword:", error);
+    console.error(" Erro crítico no forgotPassword:", error);
     return res.status(500).json({ error: "Erro interno no servidor" });
   }
 },
+
+
+
+
 resetPassword(req, res) {
   try {
     const { email, token, password } = req.body;
 
-    console.log("=== RESET PASSWORD RECEBIDO ===", password);
-
+  
     if (!email || !token || !password) {
       return res.status(400).json({ error: "Todos os campos são obrigatórios" });
     }
@@ -204,7 +250,6 @@ resetPassword(req, res) {
         UserRepository.updateUserPassword(userDb.id, hashedPassword, (err) => {
           if (err) return res.status(500).json({ error: "Erro ao atualizar senha" });
 
-          console.log("✔ SENHA ALTERADA CORRETAMENTE NO BANCO!");
 
           return res.json({ message: "Senha alterada com sucesso!" });
         });
@@ -213,7 +258,7 @@ resetPassword(req, res) {
     });
 
   } catch (error) {
-    console.error("❗ ERRO CRÍTICO NO resetPassword:", error);
+    console.error(" ERRO CRÍTICO NO resetPassword:", error);
     return res.status(500).json({ error: "Erro interno no servidor" });
   }
 }

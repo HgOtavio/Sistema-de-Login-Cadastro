@@ -83,70 +83,90 @@
       db.run("DELETE FROM users WHERE id = ?", [id], callback);
     },
 
-    saveResetToken(email, token, callback) {
-      const sql = `
-        UPDATE users 
-        SET reset_token = ?, 
-            reset_token_expire = DATETIME('now', '+15 minutes')
-        WHERE email = ?
-      `;
-      db.run(sql, [token, email], function(err) {
-        if (err) console.error("Erro ao salvar reset_token:", err);
-        else console.log(`Reset token salvo para ${email}, linhas afetadas:`, this.changes);
-        callback(err);
-      });
-    },
+saveResetToken(email, token, callback) {
+  const checkSql = `
+    SELECT reset_token, reset_token_expire 
+    FROM users 
+    WHERE email = ?
+  `;
 
-    validateResetToken(email, token, callback) {
-      const sql = `
-        SELECT id FROM users 
-        WHERE email = ? 
-        AND reset_token = ? 
-        AND reset_token_expire > DATETIME('now')
-      `;
+  db.get(checkSql, [email], (err, row) => {
+    if (err) {
+      console.error("Erro ao consultar reset_token existente:", err);
+      return callback(err);
+    }
 
-      db.get(sql, [email, token], (err, row) => {
-        if (err) {
-          console.error("Erro ao validar reset_token:", err);
-          return callback(err, null);
+    if (row && row.reset_token && row.reset_token_expire) {
+
+      // arruma formato de data
+      const raw = String(row.reset_token_expire).trim();
+      const iso = raw.replace(" ", "T");
+      const expireTime = new Date(iso);
+      const now = new Date();
+
+      // verifica se interpretou corretamente
+      if (!isNaN(expireTime.getTime())) {
+        if (expireTime > now) {
+          console.log("Já existe um token ativo, ainda não expirou!");
+          return callback(null, {
+            alreadyHasToken: true,
+            message: "Você já possui um token ativo. Verifique seu email."
+          });
         }
-        const valid = !!row;
-        console.log(`Token ${token} para ${email} é válido?`, valid);
-        callback(null, valid);
-      });
-    },
+      } else {
+        console.warn("⚠ reset_token_expire inválido, substituindo…");
+      }
+    }
 
-  async resetPassword(req, res) {
-    try {
-      const { email, token, password } = req.body;
-
-      if (!email || !token || !password) {
-        return res.status(400).json({ error: "Todos os campos são obrigatórios" });
+    // grava novo token
+    const sql = `
+      UPDATE users 
+      SET reset_token = ?, 
+          reset_token_expire = DATETIME('now', '+15 minutes')
+      WHERE email = ?
+    `;
+    
+    db.run(sql, [token, email], function(err) {
+      if (err) {
+        console.error("Erro ao salvar reset_token:", err);
+        return callback(err);
       }
 
-      UserRepository.validateResetToken(email, token, (err, valid) => {
-        if (err) {
-          return res.status(500).json({ error: "Erro ao processar token" });
-        }
-
-        if (!valid) {
-          return res.status(400).json({ error: "Token inválido" });
-        }
-
-        // Aqui passa a senha pura
-        UserRepository.updatePassword(email, password, (err) => {
-          if (err) {
-            return res.status(500).json({ error: "Erro ao atualizar senha" });
-          }
-
-          return res.json({ message: "Senha alterada com sucesso!" });
-        });
+      console.log(`Novo reset token salvo para ${email}, linhas afetadas:`, this.changes);
+      callback(null, { 
+        alreadyHasToken: false,
+        message: "Token gerado com sucesso."
       });
+    });
+  });
+},
 
-    } catch (error) {
-      return res.status(500).json({ error: "Erro interno no servidor" });
+
+
+validateResetToken(email, token, callback) {
+  const sql = `
+    SELECT id FROM users 
+    WHERE email = ? 
+    AND reset_token = ? 
+    AND reset_token_expire > DATETIME('now')
+  `;
+
+  db.get(sql, [email, token], (err, row) => {
+    if (err) {
+      console.error("Erro ao validar reset_token:", err);
+      return callback(err, null);
     }
-  },
+
+    if (row) {
+      console.log(`Token ${token} para ${email} é válido.`);
+      return callback(null, true);
+    }
+
+    console.log(`Token ${token} para ${email} é inválido ou expirou.`);
+    return callback(null, false);
+  });
+},
+
   
   updateUserPassword(id, hashedPassword, callback) {
   const sql = `UPDATE users SET password = ?, reset_token = NULL, reset_token_expire = NULL WHERE id = ?`;
@@ -158,7 +178,27 @@
     }
     return callback(null);
   });
+}, 
+
+checkExistingValidToken(email, callback) {
+  const sql = `
+    SELECT reset_token_expire
+    FROM users
+    WHERE email = ? AND reset_token_expire > DATETIME('now')
+  `;
+
+  db.get(sql, [email], (err, row) => {
+    if (err) {
+      console.error("Erro ao verificar token existente:", err);
+      return callback(err, null);
+    }
+
+    const exists = !!row; // true se encontrou token ainda válido
+    console.log("🔹 checkExistingValidToken:", exists);
+    callback(null, exists);
+  });
 }
+
 
   
 

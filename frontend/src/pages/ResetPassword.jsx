@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useLocation, useNavigate, Link } from "react-router-dom";
 import axios from "../services/api";
 import "../assets/css/reset.css";
 import { toast } from "react-toastify";
@@ -19,46 +19,73 @@ export default function ResetPassword() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
+  const [timeLeft, setTimeLeft] = useState(0);
+
+  // PEGAR O TEMPO DO LOCALSTORAGE
+  useEffect(() => {
+    const expireTime = localStorage.getItem("resetExpire");
+
+    if (!expireTime) {
+      toast.error("Nenhum token encontrado!", { autoClose: 4000 });
+      return navigate("/");
+    }
+
+    const timer = setInterval(() => {
+      const now = Date.now();
+      const diff = Math.floor((expireTime - now) / 1000);
+
+      if (diff <= 0) {
+        setTimeLeft(0);
+        toast.error("Tempo expirado! Solicite outro token.", { autoClose: 5000 });
+        localStorage.removeItem("resetExpire");
+        navigate("/");
+        return;
+      }
+
+      setTimeLeft(diff);
+
+    }, 1000);
+
+    return () => clearInterval(timer);
+
+  }, [navigate]);
+
+  function formatTime(sec) {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return `${m}:${s < 10 ? "0" + s : s}`;
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
 
-    // Valida senhas iguais
     if (password !== confirmPassword) {
       toast.error("As senhas não coincidem", { autoClose: 3000 });
       return;
     }
 
-    // Aviso de envio
     toast.info("Atualizando senha...", { autoClose: 2000 });
 
-    // Logs para debug
-    console.log("=== Reset de senha iniciado ===");
-    console.log("Email:", email);
-    console.log("Token:", token);
-    console.log("Senha pura enviada:", password);
-    console.log("Confirmação da senha:", confirmPassword);
-
     try {
-      // Envia a senha pura, sem hash
       const res = await axios.put("/auth/reset", {
         email,
         token,
         password
       });
 
-      console.log("Resposta do backend:", res.data);
-
       toast.success(res.data.message || "Senha alterada com sucesso!", { autoClose: 3000 });
-      navigate("/"); // volta para login
+
+      localStorage.removeItem("resetExpire");
+      navigate("/");
+
     } catch (error) {
       console.error("Erro no frontend:", error);
 
-      const backendMsg = error?.response?.data?.message;
-      const smtpMsg = error?.response?.data?.error;
-      const defaultMsg = error?.message;
-
       toast.error(
-        backendMsg || smtpMsg || defaultMsg || "Erro ao redefinir senha",
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        error?.message ||
+        "Erro ao redefinir senha",
         { autoClose: 4000 }
       );
     }
@@ -67,7 +94,14 @@ export default function ResetPassword() {
   return (
     <div className="reset-container">
       <div className="reset-box">
+
+        {/* Timer visual */}
+        <div style={{ textAlign: "center", color: "#66aaff", marginBottom: "10px" }}>
+          Token expira em: <b>{formatTime(timeLeft)}</b>
+        </div>
+
         <h2 className="reset-title">Redefinir senha</h2>
+
         <form className="reset-form" onSubmit={handleSubmit}>
           <div className="reset-row">
             <input
@@ -126,6 +160,12 @@ export default function ResetPassword() {
 
           <button className="reset-btn" type="submit">Salvar nova senha</button>
         </form>
+
+        {/* link de lembrou senha */}
+        <div style={{ marginTop: "15px", color: "#bbbbbb" }}>
+          Lembrou a senha? <Link to="/" style={{ color: "#66aaff" }}>Voltar ao login</Link>
+        </div>
+
       </div>
     </div>
   );

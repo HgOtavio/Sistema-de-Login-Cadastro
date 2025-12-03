@@ -8,7 +8,10 @@ const transporter = nodemailer.createTransport({
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS
   }
+
+  
 });
+
 
 async function sendResetEmail(to, token) {
   return transporter.sendMail({

@@ -5,21 +5,40 @@ import "../assets/css/forgot.css";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import ReCAPTCHA from "react-google-recaptcha";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
+  const [captchaToken, setCaptchaToken] = useState("");
   const navigate = useNavigate();
 
   async function handleSubmit(e) {
     e.preventDefault();
+
+    // Regex mais completo para validar emails
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(email)) {
+      toast.error("Digite um email válido");
+      return;
+    }
+
+    if (!captchaToken) {
+      toast.error("Por favor confirme que você não é um robô");
+      return;
+    }
+
     toast.info("Enviando email...", { autoClose: 2000 });
 
     try {
-      const res = await axios.post("/auth/forgot", { email });
+      const res = await axios.post("/auth/forgot", { 
+        email, 
+        captchaToken 
+      });
+
+      const expireTime = Date.now() + 10 * 60 * 1000; 
+      localStorage.setItem("resetExpire", expireTime);
 
       toast.success(res.data?.message || "Código enviado com sucesso!", { autoClose: 3000 });
-
-      // Redireciona para reset-password
       navigate("/reset-password", { state: { email } });
 
     } catch (error) {
@@ -52,6 +71,12 @@ export default function ForgotPassword() {
             placeholder="Digite seu email"
             onChange={(e) => setEmail(e.target.value)}
             required
+          />
+
+          <ReCAPTCHA
+            sitekey={process.env.REACT_APP_RECAPTCHA_SITE_KEY}
+            theme="dark"
+            onChange={setCaptchaToken}
           />
 
           <button className="auth-button" type="submit">Enviar</button>
