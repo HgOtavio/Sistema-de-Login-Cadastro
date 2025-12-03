@@ -220,49 +220,84 @@ if (!emailRegex.test(email)) {
 
 
 
-
 resetPassword(req, res) {
   try {
-    const { email, token, password } = req.body;
+    let { email, token, password } = req.body;
 
-  
+    // validação básica
     if (!email || !token || !password) {
       return res.status(400).json({ error: "Todos os campos são obrigatórios" });
     }
 
-    // regras iguais ao REGISTER
+    // limpar email
+    email = email.trim().toLowerCase();
+
+    // validação de senha
     if (password.length < 12) return res.status(400).json({ error: "Senha fraca — mínimo 12 caracteres!" });
     if (!/[A-Z]/.test(password)) return res.status(400).json({ error: "Senha precisa ter pelo menos 1 letra maiúscula!" });
     if (!/[a-z]/.test(password)) return res.status(400).json({ error: "Senha precisa ter pelo menos 1 letra minúscula!" });
     if (!/[0-9]/.test(password)) return res.status(400).json({ error: "Senha precisa ter pelo menos 1 número!" });
     if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) return res.status(400).json({ error: "Senha precisa ter pelo menos 1 caractere especial!" });
 
+    // valida token
     UserRepository.validateResetToken(email, token, (err, valid) => {
-      if (err) return res.status(500).json({ error: "Erro ao processar token" });
-      if (!valid) return res.status(400).json({ error: "Token inválido" });
+      try {
+        if (err) {
+          console.error("Erro ao validar token:", err);
+          return res.status(500).json({ error: "Erro interno ao processar token" });
+        }
 
-      UserRepository.getByEmail(email, (err, userDb) => {
-        if (err || !userDb) return res.status(404).json({ error: "Usuário não encontrado" });
+        if (!valid) {
+          return res.status(400).json({ error: "Token inválido ou expirado" });
+        }
 
-        // HASH CORRETO
-        const hashedPassword = bcrypt.hashSync(password, 10);
+        // busca usuário
+        UserRepository.getByEmail(email, (err, userDb) => {
+          try {
+            if (err) {
+              console.error("Erro ao buscar usuário:", err);
+              return res.status(500).json({ error: "Erro interno ao buscar usuário" });
+            }
 
-        UserRepository.updateUserPassword(userDb.id, hashedPassword, (err) => {
-          if (err) return res.status(500).json({ error: "Erro ao atualizar senha" });
+            if (!userDb) {
+              return res.status(404).json({ error: "Usuário não encontrado" });
+            }
 
+            // hash da senha
+            const hashedPassword = bcrypt.hashSync(password, 10);
 
-          return res.json({ message: "Senha alterada com sucesso!" });
+            // atualiza senha
+            UserRepository.updateUserPassword(userDb.id, hashedPassword, (err) => {
+              try {
+                if (err) {
+                  console.error("Erro ao atualizar senha:", err);
+                  return res.status(500).json({ error: "Erro ao atualizar senha" });
+                }
+
+                return res.json({ message: "Senha alterada com sucesso!" });
+              } catch (innerErr) {
+                console.error("Erro crítico ao atualizar senha:", innerErr);
+                return res.status(500).json({ error: "Erro interno no servidor" });
+              }
+            });
+
+          } catch (innerErr) {
+            console.error("Erro crítico ao processar usuário:", innerErr);
+            return res.status(500).json({ error: "Erro interno no servidor" });
+          }
         });
 
-      });
+      } catch (innerErr) {
+        console.error("Erro crítico ao validar token:", innerErr);
+        return res.status(500).json({ error: "Erro interno no servidor" });
+      }
     });
 
   } catch (error) {
-    console.error(" ERRO CRÍTICO NO resetPassword:", error);
+    console.error("Erro crítico no resetPassword:", error);
     return res.status(500).json({ error: "Erro interno no servidor" });
   }
 }
-
 
 
 
