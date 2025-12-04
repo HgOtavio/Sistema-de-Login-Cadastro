@@ -37,47 +37,60 @@
       );
     },
 
-    updateUser(id, user, callback) {
-      let fields = [];
-      let values = [];
+  updateUser(id, user, callback) {
+  let fields = [];
+  let values = [];
 
-      if (user.name) {
-        fields.push("name = ?");
-        values.push(user.name);
-      }
+  if (user.name) {
+    fields.push("name = ?");
+    values.push(user.name);
+  }
 
-      if (user.email) {
-        fields.push("email = ?");
-        values.push(user.email);
-      }
+  if (user.email) {
+    fields.push("email = ?");
+    values.push(user.email);
+  }
 
-      if (user.password) {
-        // Para atualizações normais de usuário, hash aqui
-        const hash = bcrypt.hashSync(user.password, 10);
-        fields.push("password = ?");
-        values.push(hash);
-      }
+  if (user.password) {
+    // Hash da senha
+    const hash = bcrypt.hashSync(user.password, 10);
+    fields.push("password = ?");
+    values.push(hash);
+  }
 
-      if (user.role) {
-        fields.push("role = ?");
-        values.push(user.role);
-      }
+  if (user.role) {
+    fields.push("role = ?");
+    values.push(user.role);
+  }
 
-      fields.push("updated_at = ?");
-      values.push(new Date().toISOString());
+  //  ADICIONADO: campo de controle de atualização
+  if (user.last_update !== undefined) {
+    fields.push("last_update = ?");
+    values.push(user.last_update);
+  }
 
-      const sql = `UPDATE users SET ${fields.join(", ")} WHERE id = ?`;
-      values.push(id);
+  //  ADICIONADO: contador de atualizações
+  if (user.update_count !== undefined) {
+    fields.push("update_count = ?");
+    values.push(user.update_count);
+  }
 
-      db.run(sql, values, function(err) {
-        if (err) {
-          console.error("Erro no SQLite ao atualizar usuário:", err);
-        } else {
-          console.log("updateUser: Linhas afetadas:", this.changes);
-        }
-        callback(err);
-      });
-    },
+  // Timestamp atualizado sempre
+  fields.push("updated_at = ?");
+  values.push(new Date().toISOString());
+
+  const sql = `UPDATE users SET ${fields.join(", ")} WHERE id = ?`;
+  values.push(id);
+
+  db.run(sql, values, function(err) {
+    if (err) {
+      console.error("Erro no SQLite ao atualizar usuário:", err);
+    } else {
+      console.log("updateUser: Linhas afetadas:", this.changes);
+    }
+    callback(err);
+  });
+},
 
     remove(id, callback) {
       db.run("DELETE FROM users WHERE id = ?", [id], callback);
@@ -114,7 +127,7 @@ saveResetToken(email, token, callback) {
           });
         }
       } else {
-        console.warn("⚠ reset_token_expire inválido, substituindo…");
+        console.warn(" reset_token_expire inválido, substituindo…");
       }
     }
 
@@ -194,7 +207,7 @@ checkExistingValidToken(email, callback) {
     }
 
     const exists = !!row; // true se encontrou token ainda válido
-    console.log("🔹 checkExistingValidToken:", exists);
+    console.log(" checkExistingValidToken:", exists);
     callback(null, exists);
   });
 }

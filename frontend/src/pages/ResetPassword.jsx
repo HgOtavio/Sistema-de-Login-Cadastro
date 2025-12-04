@@ -21,7 +21,7 @@ export default function ResetPassword() {
 
   const [timeLeft, setTimeLeft] = useState(0);
 
-  // PEGAR O TEMPO DO LOCALSTORAGE
+  
   useEffect(() => {
     const expireTime = localStorage.getItem("resetExpire");
 

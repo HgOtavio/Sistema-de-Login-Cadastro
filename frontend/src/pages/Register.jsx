@@ -90,7 +90,10 @@ export default function Register() {
       });
 
       toast.success("Registrado com sucesso!");
-      window.location.href = "/";
+    // Redireciona após 1 segundo (1000ms)
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 50000);
       return response.data;
 
     } catch (error) {

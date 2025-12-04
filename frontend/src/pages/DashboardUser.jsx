@@ -30,20 +30,32 @@ useEffect(() => {
 
   if (loadingUser) return; // ainda carregando user
 
-  if (!token || !user) {
-    console.log(" Token ou user inválido. Fazendo logout.");
-    logout(); // garante que token/user sejam removidos
-    toast.error("Você precisa estar logado.");
-    navigate("/", { replace: true });
-    return;
+ if (!token || !user) {
+
+  // Remove token e user do storage
+  logout(); 
+
+  // Mensagem personalizada para o usuário
+  if (!token && !user) {
+    toast.error("Você não está logado. Por favor, faça login para continuar.");
+  } else if (!token) {
+    toast.error("Sessão expirada. Faça login novamente.");
+  } else {
+    toast.error("Acesso negado. Você precisa estar logado.");
   }
+
+  // Redireciona para a página inicial
+  navigate("/", { replace: true });
+  return;
+}
+
 
   try {
     const payload = JSON.parse(atob(token.split(".")[1]));
     console.log("Payload do token:", payload);
 
     if (!payload || payload.id !== user.id) {
-      console.log(" Token não corresponde ao user.");
+     
       logout();
       toast.error("Token inválido para este usuário.");
       navigate("/", { replace: true });
@@ -51,14 +63,14 @@ useEffect(() => {
     }
 
     if (payload.role === "admin") {
-      console.log(" Admin tentando acessar painel user.");
+     
       toast.info("Admins acessam o painel administrativo.");
       navigate("/dashboard-admin", { replace: true });
       return;
     }
 
   } catch (err) {
-    console.log(" Erro ao validar token:", err);
+
     logout();
     toast.error("Token corrompido ou inválido.");
     navigate("/", { replace: true });
@@ -81,31 +93,31 @@ useEffect(() => {
     const emailUser = email.split("@")[0];
 
     if (senhaConfirmacao.length < 12) {
-      alert("Senha fraca — mínimo 12 caracteres!");
+      toast.info("Senha fraca — mínimo 12 caracteres!");
       return false;
     }
     if (!/[A-Z]/.test(senhaConfirmacao)) {
-      alert("A senha precisa ter pelo menos 1 letra maiúscula!");
+       toast.info("A senha precisa ter pelo menos 1 letra maiúscula!");
       return false;
     }
     if (!/[a-z]/.test(senhaConfirmacao)) {
-      alert("A senha precisa ter pelo menos 1 letra minúscula!");
+      toast.info("A senha precisa ter pelo menos 1 letra minúscula!");
       return false;
     }
     if (!/[0-9]/.test(senhaConfirmacao)) {
-      alert("A senha precisa ter pelo menos 1 número!");
+       toast.info("A senha precisa ter pelo menos 1 número!");
       return false;
     }
     if (!/[!@#$%^&*()_+\-=[\]{};':\"\\|,.<>/?]/.test(senhaConfirmacao)) {
-      alert("A senha precisa ter pelo menos 1 caractere especial!");
+       toast.info("A senha precisa ter pelo menos 1 caractere especial!");
       return false;
     }
     if (nome.length >= 3 && senha.includes(nome)) {
-      alert("A senha não pode conter seu nome!");
+      toast.info("A senha não pode conter seu nome!");
       return false;
     }
     if (emailUser.length >= 3 && senha.includes(emailUser)) {
-      alert("A senha não pode conter parte do seu email!");
+      toast.info("A senha não pode conter parte do seu email!");
       return false;
     }
 
@@ -115,13 +127,13 @@ useEffect(() => {
   // Exclusão da conta
   async function excluirConta() {
     if (!senhaConfirmacao) {
-      alert("Informe sua senha para confirmar.");
+     toast.info("Informe sua senha para confirmar.");
       return;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
     if (!emailRegex.test(user.email)) {
-      alert("Email inválido! Use um email válido com domínio (ex: .com)");
+       toast.info("Email inválido! Use um email válido com domínio (ex: .com)");
       return;
     }
 
@@ -139,11 +151,11 @@ useEffect(() => {
     const data = await res.json();
 
     if (!res.ok) {
-      alert(data.error || "Senha incorreta!");
+     toast.info(data.error || "Senha incorreta!");
       return;
     }
 
-    alert("Conta excluída com sucesso!");
+    toast.warn("Conta excluída com sucesso!");
     logout();
     navigate("/", { replace: true });
   }

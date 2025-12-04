@@ -43,46 +43,131 @@ module.exports = {
   }
 },
 
-  async update(req, res) {
+async update(req, res) {
   try {
     const { id } = req.params;
 
-    // Verificação se o body possui chaves JSON "{}"
     if (!req.body || typeof req.body !== "object") {
-      return res.status(400).json({ error: "Body JSON inválido ou ausente. Use { }" });
+      return res
+        .status(400)
+        .json({ error: "Body JSON inválido ou ausente. Use { }" });
     }
 
     const { name, password, role, email } = req.body;
 
-    console.log(" JSON RECEBIDO:", req.body);
-
+    // Permissões
     if (req.user.role !== "admin" && req.user.id != id) {
       return res.status(403).json({ error: "Sem permissão" });
     }
 
+    // Validadores
+    const validarEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+    const validarSenha = (password) => {
+      if (!password) return true;
+      if (password.length < 12) return false;
+      if (!/[A-Z]/.test(password)) return false;
+      if (!/[a-z]/.test(password)) return false;
+      if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) return false;
+      return true;
+    };
+
     UserRepository.getById(id, (err, userDb) => {
+      if (err) return res.status(500).json({ error: "Erro ao buscar usuário" });
+      if (!userDb) return res.status(404).json({ error: "Usuário não encontrado" });
 
-      if (err) {
-        console.log(" Erro DB:", err);
-        return res.status(500).json({ error: "Erro no banco ao buscar usuário" });
+      const now = Date.now();
+      const lastUpdate = Number(userDb.last_update) || 0;
+      let updateCount = Number(userDb.update_count) || 0;
+
+      const diff = now - lastUpdate;
+      const LIMIT = 24 * 60 * 60 * 1000;
+
+      // Reseta após 24h
+      if (diff > LIMIT) updateCount = 0;
+
+      const next_reset = new Date(lastUpdate + LIMIT).toLocaleString("pt-BR");
+
+      /** ROLE **/
+      let newRole = userDb.role;
+      let roleMessage = "";
+
+      if (req.user.role === "admin" && role) {
+        newRole = role;
+        roleMessage = `Role alterado para '${newRole}' pelo admin.`;
+      } else if (req.user.role === "user" && role) {
+        roleMessage = `Usuário normal não pode alterar o role. Mantido '${newRole}'.`;
       }
 
-      if (!userDb) {
-        return res.status(404).json({ error: "Usuário não encontrado" });
+      // Validações
+      if (email && !validarEmail(email)) {
+        return res.status(400).json({ error: "Email inválido" });
       }
 
-      let newRole = role;
-      if (req.user.role !== "admin") newRole = userDb.role;
+      if (password && !validarSenha(password)) {
+        return res.status(400).json({
+          error:
+            "Senha inválida: mínimo 12 caracteres, uma letra maiúscula, uma minúscula e um caractere especial."
+        });
+      }
 
-      if (email) {
-        UserRepository.getByEmail(email, (err, userWithEmail) => {
+      // Função final
+      const atualizarUser = () => {
+        const changes = [];
+        if (name && name !== userDb.name) changes.push("Nome alterado");
+        if (email && email !== userDb.email) changes.push("Email alterado");
+        if (password) changes.push("Senha alterada");
+        if (newRole !== userDb.role) changes.push("Role alterado");
 
+        const houveMudanca = changes.length > 0;
+
+        // ❗ CÁLCULO CORRETO PARA BLOQUEIO
+        const tentativaCount = updateCount + (houveMudanca ? 1 : 0);
+
+        if (req.user.role === "user" && tentativaCount > 2) {
+          return res.status(403).json({
+            error: "Limite de 2 edições em 24 horas atingido. Usuário não foi atualizado.",
+            next_reset
+          });
+        }
+
+        const newUpdateCount = houveMudanca ? updateCount + 1 : updateCount;
+        const updates_left = 2 - newUpdateCount;
+
+        const updatedData = {
+          name: name || userDb.name,
+          password: password || userDb.password,
+          email: email || userDb.email,
+          role: newRole,
+          last_update: now,
+          update_count: newUpdateCount
+        };
+
+        UserRepository.updateUser(id, updatedData, (err) => {
           if (err) {
-            console.log(" Erro DB:", err);
-            return res.status(500).json({ error: "Erro no banco ao validar email" });
+            return res.status(500).json({ error: "Erro ao atualizar usuário" });
           }
 
-          if (userWithEmail && userWithEmail.id != id) {
+          const next_reset_at = new Date(lastUpdate + LIMIT).toLocaleString("pt-BR");
+
+          return res.json({
+            message: houveMudanca
+              ? "Usuário atualizado com sucesso!"
+              : "Nenhuma alteração foi realizada.",
+            roleMessage,
+            changes: houveMudanca ? changes : ["Nenhuma mudança detectada"],
+            updates_left,
+            next_reset_at
+          });
+        });
+      };
+
+      // Checagem de e-mail duplicado
+      if (email) {
+        UserRepository.getByEmail(email, (err, found) => {
+          if (err) return res.status(500).json({ error: "Erro ao validar email" });
+
+          if (found && found.id != id) {
             return res.status(400).json({ error: "Este email já está em uso" });
           }
 
@@ -91,31 +176,16 @@ module.exports = {
       } else {
         return atualizarUser();
       }
-
-      function atualizarUser() {
-        UserRepository.updateUser(
-          id,
-          { name, password, role: newRole, email },
-          (err) => {
-
-            if (err) {
-              console.log(" Erro DB ao atualizar:", err);
-              return res.status(500).json({ error: "Erro ao atualizar usuário" });
-            }
-
-            return res.json({ message: "Usuário atualizado com sucesso!" });
-          }
-        );
-      }
-
     });
-
   } catch (err) {
-    console.log(" ERRO GERAL:", err);
-    return res.status(500).json({ error: "Erro interno" });
+    console.log("Erro inesperado:", err);
+    return res.status(500).json({ error: "Erro inesperado ao atualizar usuário" });
   }
-},
+}
 
+
+
+,
 
 remove(req, res) {
   try {

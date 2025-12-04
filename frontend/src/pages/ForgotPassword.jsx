@@ -33,10 +33,12 @@ export default function ForgotPassword() {
       const res = await axios.post("/auth/forgot", { 
         email, 
         captchaToken 
+
       });
 
       const expireTime = Date.now() + 10 * 60 * 1000; 
       localStorage.setItem("resetExpire", expireTime);
+     // console.log(captchaToken);  (para ter acesso ao token do recaptcha e usa-lo no postman)
 
       toast.success(res.data?.message || "Código enviado com sucesso!", { autoClose: 3000 });
       navigate("/reset-password", { state: { email } });
@@ -67,7 +69,7 @@ export default function ForgotPassword() {
         <form className="auth-form" onSubmit={handleSubmit}>
           <input
             className="auth-input"
-            type="email"
+            type="text"
             placeholder="Digite seu email"
             onChange={(e) => setEmail(e.target.value)}
             required

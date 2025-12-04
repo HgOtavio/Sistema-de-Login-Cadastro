@@ -23,10 +23,7 @@ async function handleSubmit(e) {
 
     const token = localStorage.getItem("token");
     const user = JSON.parse(localStorage.getItem("user"));
-    console.log("Resposta do login:", response);
-    console.log("Token no localStorage:", token);
-    console.log("Usuário no localStorage:", user);
-
+   
       window.location.href = "/dashboard";
   } catch (err) {
     if (err.response && err.response.data && err.response.data.error) {
