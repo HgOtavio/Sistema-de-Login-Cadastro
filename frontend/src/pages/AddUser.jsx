@@ -1,10 +1,13 @@
 import { useState, useEffect, useContext } from "react";
-import api from "../services/api";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "../assets/css/add-user.css";
 import { AuthContext } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import useAddUser from "../hooks/useAddUser";
+import { validarEmail, validarSenha } from "../utils/validation";
+
+
 
 import EyeOpen from "../assets/images/eye-open.png";
 import EyeClosed from "../assets/images/eye-closed.png";
@@ -12,6 +15,7 @@ import EyeClosed from "../assets/images/eye-closed.png";
 export default function AddUser() {
 const { user, loadingUser } = useContext(AuthContext);
   const navigate = useNavigate();
+const { addUser, loading } = useAddUser();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -65,93 +69,50 @@ if (!user) {
   }
 }, [user, navigate]);
 
-  function validarEmail(email) {
-    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return regex.test(email);
+
+
+async function handleCreate(e) {
+  e.preventDefault();
+
+  // 🔍 Validação de email
+  if (!validarEmail(email)) {
+    toast.error("Email inválido! Exemplo válido: usuario@gmail.com");
+    return;
   }
 
-  function validarSenha() {
-    const nome = name.toLowerCase();
-    const emailLower = email.toLowerCase();
-    const emailUser = emailLower.split("@")[0];
-    const senha = password.toLowerCase();
-
-    if (password.length < 12) {
-      toast.warning("Senha fraca — mínimo 12 caracteres!");
-      return false;
-    }
-
-    if (!/[A-Z]/.test(password)) {
-      toast.warning("Senha precisa ter pelo menos 1 letra maiúscula!");
-      return false;
-    }
-
-    if (!/[a-z]/.test(password)) {
-      toast.warning("Senha precisa ter pelo menos 1 letra minúscula!");
-      return false;
-    }
-
-    if (!/[0-9]/.test(password)) {
-      toast.warning("Senha precisa ter pelo menos 1 número!");
-      return false;
-    }
-
-    if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) {
-      toast.warning("Senha precisa ter pelo menos 1 caractere especial!");
-      return false;
-    }
-
-    if (nome.length >= 3 && senha.includes(nome)) {
-      toast.warning("A senha não pode conter parte do nome!");
-      return false;
-    }
-
-    if (emailUser.length >= 3 && senha.includes(emailUser)) {
-      toast.warning("A senha não pode conter parte do email!");
-      return false;
-    }
-
-    return true;
+  // Validação de senha (recebe senha, nome e email)
+  if (!validarSenha(password, name, email)) {
+    return;
   }
 
-  async function handleCreate(e) {
-    e.preventDefault();
-
-    if (!validarEmail(email)) {
-      toast.error("Email inválido! Exemplo válido: usuario@gmail.com");
-      return;
-    }
-
-    if (!validarSenha()) return;
-
-    if (password !== confirmPassword) {
-      toast.error("As senhas não conferem!");
-      return;
-    }
-
-    try {
-      const response = await api.post("/auth/register", {
-        name,
-        email,
-        password,
-        role,
-      });
-
-      toast.success("Usuário criado com sucesso!");
-      navigate("/gerenciar-usuarios");
-      return response.data;
-    } catch (error) {
-      if (error.response) {
-        const msg =
-          error.response.data.error ||
-          JSON.stringify(error.response.data) ||
-          "Verifique os dados";
-        toast.error("Erro ao criar usuário: " + msg);
-      } else {
-        toast.error("Erro ao criar usuário. Verifique a conexão com o servidor.");
-      }
-    }
+  //  Senhas diferentes
+  if (password !== confirmPassword) {
+    toast.error("As senhas não conferem!");
+    return;
   }
+
+  //  Chamada ao hook corretamente
+  const result = await addUser({
+    name,
+    email,
+    password,
+    role,
+  });
+
+  //  Falhou
+  if (!result.success) {
+    toast.error("Erro ao criar usuário: " + result.error);
+    return;
+  }
+
+  // ✔ Sucesso
+  toast.success("Usuário criado com sucesso!");
+  navigate("/gerenciar-usuarios");
+
+  return result.data;
+}
+
+
 
   return (
     <div className="mc">

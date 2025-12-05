@@ -3,113 +3,61 @@ import api from "../services/api";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "../assets/css/register.css";
+import useRegister from "../hooks/useRegister";
 
 import EyeOpen from "../assets/images/eye-open.png";
 import EyeClosed from "../assets/images/eye-closed.png";
+import { validarEmail, validarSenha } from "../utils/validation";
 
 export default function Register() {
   const [name, setName] = useState("");
+const { registerUser, loading } = useRegister();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  function validarEmail(email) {
-    // precisa de algo antes do @ e algo depois contendo um ponto ex: gmail.com
-    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return regex.test(email);
+async function handleSubmit(e) {
+  e.preventDefault();
+
+  //  Validação do email
+  if (!validarEmail(email)) {
+    toast.error("Email inválido! Exemplo válido: usuario@gmail.com");
+    return;
   }
 
-  function validarSenha() {
-    const nome = name.toLowerCase();
-    const emailLower = email.toLowerCase();
-    const emailUser = emailLower.split("@")[0];
-    const senha = password.toLowerCase();
-
-    if (password.length < 12) {
-      toast.warning("Senha fraca — mínimo 12 caracteres!");
-      return false;
-    }
-
-    if (!/[A-Z]/.test(password)) {
-      toast.warning("Senha precisa ter pelo menos 1 letra maiúscula!");
-      return false;
-    }
-
-    if (!/[a-z]/.test(password)) {
-      toast.warning("Senha precisa ter pelo menos 1 letra minúscula!");
-      return false;
-    }
-
-    if (!/[0-9]/.test(password)) {
-      toast.warning("Senha precisa ter pelo menos 1 número!");
-      return false;
-    }
-
-    if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) {
-      toast.warning("Senha precisa ter pelo menos 1 caractere especial!");
-      return false;
-    }
-
-    if (nome.length >= 3 && senha.includes(nome)) {
-      toast.warning("A senha não pode conter parte do nome!");
-      return false;
-    }
-
-    if (emailUser.length >= 3 && senha.includes(emailUser)) {
-      toast.warning("A senha não pode conter parte do email!");
-      return false;
-    }
-
-    return true;
+  //  Validação da senha (recebe senha, nome e email)
+  if (!validarSenha(password, name, email)) {
+    return;
   }
 
-  async function handleSubmit(e) {
-    e.preventDefault();
-
-    // validação email aqui
-    if (!validarEmail(email)) {
-      toast.error("Email inválido! Exemplo válido: usuario@gmail.com");
-      return;
-    }
-
-    if (!validarSenha()) return;
-
-    if (password !== confirmPassword) {
-      toast.error("As senhas não conferem!");
-      return;
-    }
-    
-
-    try {
-      const response = await api.post("/auth/register", {
-        name,
-        email,
-        password
-      });
-
-      toast.success("Registrado com sucesso!");
-    // Redireciona após 1 segundo (1000ms)
-      setTimeout(() => {
-        window.location.href = "/";
-      }, 50000);
-      return response.data;
-
-    } catch (error) {
-      if (error.response && error.response.data) {
-        const msg =
-          error.response.data.error ||
-          JSON.stringify(error.response.data) ||
-          "Erro ao registrar.";
-        toast.error("Erro ao registrar: " + msg);
-      } else {
-        toast.error("Erro inesperado. Tente novamente mais tarde.");
-      }
-
-      console.log("Erro no registro:", error);
-    }
+  //  Verifica se as senhas conferem
+  if (password !== confirmPassword) {
+    toast.error("As senhas não conferem!");
+    return;
   }
+
+  //  Chamada ao hook useRegister
+  const result = await registerUser({ name, email, password });
+
+  // = Se deu erro
+  if (!result.success) {
+    toast.error("Erro ao registrar: " + result.error);
+    return;
+  }
+
+  //  Sucesso
+  toast.success("Registrado com sucesso!");
+
+  // Redireciona após 1 segundo
+  setTimeout(() => {
+    window.location.href = "/";
+  }, 1000);
+
+  return result.data;
+}
+
 
   return (
     <div className="register-container">

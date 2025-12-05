@@ -1,4 +1,5 @@
 const UserRepository = require("../database/UserRepository");
+const { validarEmail, validarSenha } = require("../utils/validators");
 
 module.exports = {
 
@@ -8,25 +9,26 @@ module.exports = {
     });
   },
 
- get(req, res) {
+get(req, res) {
   try {
-    const { id } = req.params;
+    const id = req.query.id;
 
     if (!id) {
-      return res.status(400).json({ error: "ID é obrigatório" });
+      return res.status(400).json({ error: "ID é obrigatório na query string (?id=1 ou ?id=1,2,3)" });
     }
 
-    // Se vier dois IDs separados por vírgula
-    const ids = id.split(",").map((i) => parseInt(i.trim()));
+    // Divide IDs por vírgula e converte para número
+    const ids = id.split(",").map((i) => Number(i.trim()));
 
-    if (ids.some(isNaN)) {
-      return res.status(400).json({ error: "IDs inválidos" });
+    // Validação: todos devem ser números
+    if (ids.some((value) => isNaN(value))) {
+      return res.status(400).json({ error: "IDs inválidos. Use números, ex: ?id=1 ou ?id=1,2,3" });
     }
 
-    // Função do repository que retorna múltiplos ou 1 usuário
+    // Chama REPOSITORY
     UserRepository.getByIds(ids, (err, rows) => {
       if (err) {
-        console.error("Erro SQL:", err);
+        console.error("Erro no banco de dados:", err);
         return res.status(500).json({ error: "Erro ao consultar usuários" });
       }
 
@@ -34,15 +36,18 @@ module.exports = {
         return res.status(404).json({ error: "Usuário(s) não encontrado(s)" });
       }
 
-      return res.json(rows);
+      // Nunca envie senha
+      rows.forEach((u) => delete u.password);
+
+      return res.status(200).json(rows);
     });
 
   } catch (error) {
-    console.error("Erro crítico no get:", error);
+    console.error("Erro inesperado no controller get:", error);
     return res.status(500).json({ error: "Erro interno no servidor" });
   }
-},
-
+}
+,
 async update(req, res) {
   try {
     const { id } = req.params;
@@ -60,18 +65,6 @@ async update(req, res) {
       return res.status(403).json({ error: "Sem permissão" });
     }
 
-    // Validadores
-    const validarEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-
-    const validarSenha = (password) => {
-      if (!password) return true;
-      if (password.length < 12) return false;
-      if (!/[A-Z]/.test(password)) return false;
-      if (!/[a-z]/.test(password)) return false;
-      if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) return false;
-      return true;
-    };
-
     UserRepository.getById(id, (err, userDb) => {
       if (err) return res.status(500).json({ error: "Erro ao buscar usuário" });
       if (!userDb) return res.status(404).json({ error: "Usuário não encontrado" });
@@ -81,7 +74,7 @@ async update(req, res) {
       let updateCount = Number(userDb.update_count) || 0;
 
       const diff = now - lastUpdate;
-      const LIMIT = 24 * 60 * 60 * 1000;
+      const LIMIT = 24 * 60 * 60 * 1000; // 24h
 
       // Reseta após 24h
       if (diff > LIMIT) updateCount = 0;
@@ -99,7 +92,7 @@ async update(req, res) {
         roleMessage = `Usuário normal não pode alterar o role. Mantido '${newRole}'.`;
       }
 
-      // Validações
+      // Validações (vindo do utils)
       if (email && !validarEmail(email)) {
         return res.status(400).json({ error: "Email inválido" });
       }
@@ -121,7 +114,7 @@ async update(req, res) {
 
         const houveMudanca = changes.length > 0;
 
-        // ❗ CÁLCULO CORRETO PARA BLOQUEIO
+        // Cálculo de limite de tentativas
         const tentativaCount = updateCount + (houveMudanca ? 1 : 0);
 
         if (req.user.role === "user" && tentativaCount > 2) {
@@ -162,7 +155,7 @@ async update(req, res) {
         });
       };
 
-      // Checagem de e-mail duplicado
+      // Checagem de email duplicado
       if (email) {
         UserRepository.getByEmail(email, (err, found) => {
           if (err) return res.status(500).json({ error: "Erro ao validar email" });
@@ -182,7 +175,6 @@ async update(req, res) {
     return res.status(500).json({ error: "Erro inesperado ao atualizar usuário" });
   }
 }
-
 
 
 ,

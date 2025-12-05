@@ -3,20 +3,20 @@ const express = require("express");
 const router = express.Router();
 const UserController = require("../controllers/UserController");
 
-// Middlewares de proteção: auth = exige token, admin = exige role admin
+// Middlewares de proteção
 const auth = require("../middleware/auth");
 const admin = require("../middleware/admin");
 
 // Lista todos os usuários — permitido apenas para administradores
 router.get("/", auth, admin, UserController.list);
 
-// Retorna dados de um usuário específico — permitido para admin ou para o próprio usuário
-router.get("/:id", auth, UserController.get);
+// Buscar usuário por ID — AGORA usando query string (?id=123)
+router.get("/find", auth, UserController.get);
 
-// Atualiza dados do usuário — permitido para admin ou para o próprio usuário
+// Atualiza dados do usuário — mantém params
 router.put("/:id", auth, UserController.update);
 
-// Remove um usuário — apenas admin pode deletar usuários
+// Remove um usuário — mantém params
 router.delete("/:id", auth, UserController.remove);
 
 module.exports = router;

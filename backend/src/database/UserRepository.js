@@ -2,24 +2,44 @@
   const db = require("../database/init");
   const bcrypt = require("bcryptjs");
 
-  module.exports = {
-    getAll(callback) {
-      db.all("SELECT * FROM users", [], callback);
-    },
 
-    getById(id, callback) {
-      db.get("SELECT * FROM users WHERE id = ?", [id], callback);
-    },
+module.exports = {
+  // Lista todos os usuários
+  getAll(callback) {
+    const sql = "SELECT * FROM users";
+    db.all(sql, [], (err, rows) => {
+      if (err) return callback(err, null);
+      return callback(null, rows || []);
+    });
+  },
 
-    getByIds(ids, callback) {
-      if (!Array.isArray(ids) || ids.length === 0) {
-        return callback(null, []);
-      }
+  // Busca usuário por ID único
+  getById(id, callback) {
+    const sql = "SELECT * FROM users WHERE id = ?";
+    db.get(sql, [id], (err, row) => {
+      if (err) return callback(err, null);
+      return callback(null, row || null);
+    });
+  },
 
-      const placeholders = ids.map(() => "?").join(",");
-      const sql = `SELECT * FROM users WHERE id IN (${placeholders})`;
-      db.all(sql, ids, callback);
-    },
+  // Busca múltiplos IDs
+  getByIds(ids, callback) {
+    // Se vier vazio, retorna array vazio
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return callback(null, []);
+    }
+
+    // Cria ?,?,? dinamicamente
+    const placeholders = ids.map(() => "?").join(",");
+    const sql = `SELECT * FROM users WHERE id IN (${placeholders})`;
+
+    db.all(sql, ids, (err, rows) => {
+      if (err) return callback(err, null);
+      return callback(null, rows || []);
+    });
+  }
+,
+
 
     getByEmail(email, callback) {
       db.get("SELECT * FROM users WHERE email = ?", [email], callback);

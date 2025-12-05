@@ -3,8 +3,9 @@ import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "../assets/css/EditUser.css";
+import useUpdateUser from "../hooks/useUpdateUser";
 import { decodeId } from "../utils/cryptoId";
-
+import { validarEmail, validarSenha, podeTrocarSenha } from "../utils/validation";
 
 import EyeOpen from "../assets/images/eye-open.png";
 import EyeClosed from "../assets/images/eye-closed.png";
@@ -12,6 +13,7 @@ import EyeClosed from "../assets/images/eye-closed.png";
 export default function EditUser() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { updateUser, loading, userData } = useUpdateUser();
 
   const [user, setUser] = useState({
     name: "",
@@ -21,179 +23,65 @@ export default function EditUser() {
     last_password_change: ""
   });
 
-  
-
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPass1, setShowPass1] = useState(false);
   const [showPass2, setShowPass2] = useState(false);
 
   const PASSWORD_LIMIT_DAYS = 30;
 
-const loadUser = useCallback(async () => {
-  try {
-    const realId = decodeId(id);
-
-    if (!realId) {
-      toast.error("ID inválido ou corrompido.");
-      return;
-    }
-
-    const res = await fetch(`http://localhost:3001/users/${realId}`, {
-      headers: {
-        Authorization: "Bearer " + localStorage.getItem("token"),
-      },
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      toast.error(data.error || "Erro ao carregar usuário.");
-      return;
-    }
-     const userData = data[0]; // pega o primeiro objeto do array
-
-    setUser({
-      name: userData.name,
-      email: userData.email,
-      role: userData.role,
-      password: "",
-      last_password_change: userData.last_password_change
-    });
-
-  } catch (err) {
-    toast.error("Erro ao carregar usuário.");
-  }
-}, [id]);
-
-
-  function validarSenha() {
-    if (!user.password) return true;
-
-    const nome = user.name.toLowerCase();
-    const email = user.email.toLowerCase();
-    const emailUser = email.split("@")[0];
-    const senha = user.password.toLowerCase();
-
-    if (user.password.length < 12) {
-      toast.warning(" Senha fraca — mínimo 12 caracteres!");
-      return false;
-    }
-
-    if (!/[A-Z]/.test(user.password)) {
-      toast.warning(" Senha precisa ter pelo menos 1 letra maiúscula!");
-      return false;
-    }
-
-    if (!/[a-z]/.test(user.password)) {
-      toast.warning(" Senha precisa ter pelo menos 1 letra minúscula!");
-      return false;
-    }
-
-    if (!/[0-9]/.test(user.password)) {
-      toast.warning(" Senha precisa ter pelo menos 1 número!");
-      return false;
-    }
-
-    if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(user.password)) {
-      toast.warning(" Senha precisa ter pelo menos 1 caractere especial!");
-      return false;
-    }
-
-    if (nome.length >= 3 && senha.includes(nome)) {
-      toast.warning(" A senha não pode conter o nome do usuário!");
-      return false;
-    }
-
-    if (emailUser.length >= 3 && senha.includes(emailUser)) {
-      toast.warning(" A senha não pode conter parte do email!");
-      return false;
-    }
-
-    return true;
-  }
-
-  function podeTrocarSenha() {
-    if (!user.last_password_change) return true;
-
-    const ultima = new Date(user.last_password_change);
-    const agora = new Date();
-    const diffTime = agora - ultima;
-    const diffDays = diffTime / (1000 * 60 * 60 * 24);
-
-    return diffDays >= PASSWORD_LIMIT_DAYS;
-  }
-
-  async function handleUpdate(e) {
-    e.preventDefault();
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-
-    if (!emailRegex.test(user.email)) {
-      toast.error("Email inválido! O email deve conter @ e um domínio válido (ex: .com)");
-      return;
-    }
-
-    if (user.password) {
-
-      if (!podeTrocarSenha()) {
-        toast.error(`Você só pode trocar a senha após ${PASSWORD_LIMIT_DAYS} dias.`);
+  // Carregar usuário
+  const loadUser = useCallback(async () => {
+    try {
+      const realId = decodeId(id);
+      if (!realId) {
+        toast.error("ID inválido ou corrompido.");
         return;
       }
 
-      if (user.password !== confirmPassword) {
-        toast.error("As senhas não coincidem!");
-        return;
-      }
-
-      if (!validarSenha()) return;
-    }
-
-    const sendData = {
-      name: user.name,
-      email: user.email,
-      role: user.role
-    };
-
-    if (user.password) {
-      sendData.password = user.password;
-    }
-
-try {
-  const realId = decodeId(id);
-
-  if (!realId) {
-    toast.error("ID inválido.");
-    return;
-  }
-
-  const res = await fetch(`http://localhost:3001/users/${realId}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: "Bearer " + localStorage.getItem("token"),
-    },
-    body: JSON.stringify(sendData),
-  });
+      const params = new URLSearchParams({ id: realId });
+      const res = await fetch(`http://localhost:3001/users/find?${params.toString()}`, {
+        headers: {
+          Authorization: "Bearer " + localStorage.getItem("token"),
+        },
+      });
 
       const data = await res.json();
 
       if (!res.ok) {
-        toast.error(data.error || "Erro ao atualizar usuário.");
+        toast.error(data.error || "Erro ao carregar usuário.");
         return;
       }
 
-      toast.success("Usuário atualizado com sucesso!");
-      navigate("/gerenciar-usuarios");
+      const userData = data[0]; // pega o primeiro objeto do array
+      setUser({
+        name: userData.name,
+        email: userData.email,
+        role: userData.role,
+        password: "",
+        last_password_change: userData.last_password_change
+      });
 
     } catch (err) {
-      toast.error("Erro ao atualizar usuário.");
+      console.error(err);
+      toast.error("Erro ao carregar usuário.");
     }
-  }
+  }, [id]);
 
- 
   useEffect(() => {
     loadUser();
   }, [loadUser]);
+
+  // Atualizar usuário usando hook
+  async function handleUpdate(e) {
+    e.preventDefault();
+    await updateUser({
+      user,
+      confirmPassword,
+      id,
+      PASSWORD_LIMIT_DAYS,
+      navigate
+    });
+  }
 
   return (
     <div className="panel-container">

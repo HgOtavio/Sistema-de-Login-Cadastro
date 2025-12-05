@@ -6,70 +6,60 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { verifyCaptcha } = require("../utils/captcha");
 const SECRET = process.env.JWT_SECRET;
+const { validarEmail, validarSenha } = require("../utils/validators");
+
 
 module.exports = {
 
-  // Função de cadastro: cria usuário se o email não estiver cadastrado
- register(req, res) {
+register(req, res) {
   try {
-     if (!req.body || Object.keys(req.body).length === 0) {
-      return res.status(400).json({ 
-        error: "É necessário enviar os dados no corpo da requisição como JSON, usando chaves {}" 
+    // Body precisa existir
+    if (!req.body || Object.keys(req.body).length === 0) {
+      return res.status(400).json({
+        error:
+          "É necessário enviar os dados no corpo da requisição como JSON, usando chaves {}"
       });
     }
-    const { name, email, password, role } = req.body;
 
-    // validação de entrada
+    let { name, email, password, role } = req.body;
+
+    // Campos obrigatórios
     if (!name || !email || !password) {
-      return res.status(400).json({ error: "Nome, email e senha são obrigatórios" });
+      return res
+        .status(400)
+        .json({ error: "Nome, email e senha são obrigatórios" });
     }
 
-    // email precisa ser válido
-   const parts = email.split(".");
-const lastPart = parts[parts.length - 1];
+    // Normalizar email
+    email = email.trim().toLowerCase();
 
-if (lastPart.length < 2) {
-  return res.status(400).json({ error: "Domínio inválido no email" });
-}
+    // Validação de email
+    if (!validarEmail(email)) {
+      return res.status(400).json({ error: "Email inválido" });
+    }
 
+    // Validação de senha
+    if (!validarSenha(password)) {
+      return res.status(400).json({
+        error:
+          "Senha inválida: mínimo 12 caracteres, 1 maiúscula, 1 minúscula, 1 número e 1 caractere especial."
+      });
+    }
 
-    // senha mínima
-
-if (password.length < 12) {
-  return res.status(400).json({ error: "Senha fraca — mínimo 12 caracteres!" });
-}
-
-// pelo menos 1 maiúscula
-if (!/[A-Z]/.test(password)) {
-  return res.status(400).json({ error: "Senha precisa ter pelo menos 1 letra maiúscula!" });
-}
-
-// pelo menos 1 minúscula
-if (!/[a-z]/.test(password)) {
-  return res.status(400).json({ error: "Senha precisa ter pelo menos 1 letra minúscula!" });
-}
-
-// pelo menos 1 número
-if (!/[0-9]/.test(password)) {
-  return res.status(400).json({ error: "Senha precisa ter pelo menos 1 número!" });
-}
-
-// pelo menos 1 símbolo
-if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) {
-  return res.status(400).json({ error: "Senha precisa ter pelo menos 1 caractere especial!" });
-}
-
-
+    // Verifica se email já existe
     UserRepository.getByEmail(email, (err, userExist) => {
       if (err) {
         console.error("Erro SQL:", err);
-        return res.status(500).json({ error: "Erro no servidor ao consultar email" });
+        return res
+          .status(500)
+          .json({ error: "Erro no servidor ao consultar email" });
       }
-      
+
       if (userExist) {
         return res.status(400).json({ error: "Email já existe" });
       }
 
+      // Hash da senha
       const hash = bcrypt.hashSync(password, 10);
       const now = new Date().toISOString();
 
@@ -82,21 +72,24 @@ if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) {
         updated_at: now
       });
 
+      // Criar usuário
       UserRepository.create(user, (err) => {
         if (err) {
           console.error("Erro ao criar usuário:", err);
-          return res.status(500).json({ error: "Erro ao criar usuário" });
+          return res.status(500).json({
+            error: "Erro ao criar usuário"
+          });
         }
-        
+
         return res.json({ message: "Usuário criado com sucesso" });
       });
     });
-
   } catch (error) {
-    console.error(" ERRO CRÍTICO NO REGISTER:", error);
+    console.error("ERRO CRÍTICO NO REGISTER:", error);
     return res.status(500).json({ error: "Erro interno no servidor" });
   }
 },
+
 
 // Função de login: valida credenciais e gera token JWT com cargo e ID
   // Função de login: valida credenciais e gera token JWT com cargo e ID
@@ -129,82 +122,80 @@ login(req, res) {
 forgotPassword(req, res) {
   try {
     const { email, captchaToken } = req.body;
-    
 
+    // validação básica
+    if (!email) {
+      return res.status(400).json({ error: "Email é obrigatório" });
+    }
 
-    if (!email) return res.status(400).json({ error: "Email é obrigatório" });
-    
-// VALIDAÇÃO DO FORMATO DO EMAIL
-const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-if (!emailRegex.test(email)) {
-  return res.status(400).json({ error: "Email inválido" });
-}
+    if (!validarEmail(email)) {
+      return res.status(400).json({ error: "Email inválido" });
+    }
 
+    if (!captchaToken) {
+      return res.status(400).json({ error: "Captcha obrigatório" });
+    }
 
-    if (!captchaToken) return res.status(400).json({ error: "Captcha obrigatório" });
-
+    // valida captcha
     verifyCaptcha(captchaToken, req.ip)
       .then(captchaRes => {
-
         if (!captchaRes.success) {
-          return res.status(400).json({ error: "Falha na verificação — marque 'Não sou robô'" });
+          return res.status(400).json({
+            error: "Falha na verificação — marque 'Não sou robô'"
+          });
         }
 
+        // busca usuário
         UserRepository.getByEmail(email, (err, user) => {
-          try {
+          if (err) {
+            console.error("Erro ao buscar usuário:", err);
+            return res.status(500).json({ error: "Erro no servidor" });
+          }
+
+          // resposta padrão (não revelar se existe ou não)
+          if (!user) {
+            return res.json({
+              message: "Se o email existir, enviaremos o código."
+            });
+          }
+
+          // verifica se já existe token válido
+          UserRepository.checkExistingValidToken(email, (err, exists) => {
             if (err) {
-              console.error(" Erro ao buscar usuário:", err);
+              console.error("Erro ao verificar token existente:", err);
               return res.status(500).json({ error: "Erro no servidor" });
             }
 
-            // resposta padrão — segurança
-            if (!user) {
-              return res.json({ message: "Se o email existir, enviaremos o código." });
+            if (exists) {
+              return res.json({
+                message:
+                  "Um código já foi enviado recentemente. Verifique seu email."
+              });
             }
 
-            // verifica se já existe token válido
-            UserRepository.checkExistingValidToken(email, (err, exists) => {
+            // gera token de 6 dígitos
+            const token = Math.floor(100000 + Math.random() * 900000).toString();
+
+            // salva token
+            UserRepository.saveResetToken(email, token, (err) => {
               if (err) {
-                return res.status(500).json({ error: "Erro no servidor" });
+                console.error("Erro ao salvar token:", err);
+                return res.status(500).json({ error: "Erro ao salvar token" });
               }
 
-
-              if (exists) {
-                return res.json({ 
-                  message: "Um código já foi enviado recentemente. Verifique seu email." 
-                });
-              }
-
-              // gera token de 6 dígitos
-              const token = Math.floor(100000 + Math.random() * 900000).toString();
-              
-
-              UserRepository.saveResetToken(email, token, (err, result) => {
-                if (err) {
-                  console.error(" Erro ao salvar token no banco:", err);
-                  return res.status(500).json({ error: "Erro ao salvar token" });
-                }
-
-           
-
-                sendResetEmail(email, token)
-                  .then(() => {
-                    return res.json({ message: "Se o email existir, enviaremos o código." });
-                  })
-                  .catch(emailError => {
-                    console.error(" ERRO AO ENVIAR EMAIL:");
-                    console.error("MESSAGE:", emailError.message);
-                    console.error("STACK:", emailError.stack);
-                    console.error("FULL:", emailError);
-                    return res.status(500).json({ error: "Erro ao enviar email" });
+              // envia email
+              sendResetEmail(email, token)
+                .then(() => {
+                  return res.json({
+                    message: "Se o email existir, enviaremos o código."
                   });
-              });
+                })
+                .catch(emailError => {
+                  console.error("Erro ao enviar email:", emailError);
+                  return res.status(500).json({ error: "Erro ao enviar email" });
+                });
             });
-
-          } catch (innerErr) {
-            console.error("Erro interno no forgotPassword:", innerErr);
-            return res.status(500).json({ error: "Erro interno no servidor" });
-          }
+          });
         });
       })
       .catch(err => {
@@ -213,11 +204,10 @@ if (!emailRegex.test(email)) {
       });
 
   } catch (error) {
-    console.error(" Erro crítico no forgotPassword:", error);
+    console.error("Erro crítico no forgotPassword:", error);
     return res.status(500).json({ error: "Erro interno no servidor" });
   }
 },
-
 
 
 resetPassword(req, res) {
@@ -229,68 +219,54 @@ resetPassword(req, res) {
       return res.status(400).json({ error: "Todos os campos são obrigatórios" });
     }
 
-    // limpar email
     email = email.trim().toLowerCase();
 
-    // validação de senha
-    if (password.length < 12) return res.status(400).json({ error: "Senha fraca — mínimo 12 caracteres!" });
-    if (!/[A-Z]/.test(password)) return res.status(400).json({ error: "Senha precisa ter pelo menos 1 letra maiúscula!" });
-    if (!/[a-z]/.test(password)) return res.status(400).json({ error: "Senha precisa ter pelo menos 1 letra minúscula!" });
-    if (!/[0-9]/.test(password)) return res.status(400).json({ error: "Senha precisa ter pelo menos 1 número!" });
-    if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) return res.status(400).json({ error: "Senha precisa ter pelo menos 1 caractere especial!" });
+    // valida email
+    if (!validarEmail(email)) {
+      return res.status(400).json({ error: "Email inválido" });
+    }
 
-    // valida token
+    // valida senha usando utils
+    const senhaValida = validarSenha(password);
+    if (!senhaValida.ok) {
+      return res.status(400).json({ error: senhaValida.message });
+    }
+
+    // valida token no banco
     UserRepository.validateResetToken(email, token, (err, valid) => {
-      try {
-        if (err) {
-          console.error("Erro ao validar token:", err);
-          return res.status(500).json({ error: "Erro interno ao processar token" });
-        }
-
-        if (!valid) {
-          return res.status(400).json({ error: "Token inválido ou expirado" });
-        }
-
-        // busca usuário
-        UserRepository.getByEmail(email, (err, userDb) => {
-          try {
-            if (err) {
-              console.error("Erro ao buscar usuário:", err);
-              return res.status(500).json({ error: "Erro interno ao buscar usuário" });
-            }
-
-            if (!userDb) {
-              return res.status(404).json({ error: "Usuário não encontrado" });
-            }
-
-            // hash da senha
-            const hashedPassword = bcrypt.hashSync(password, 10);
-
-            // atualiza senha
-            UserRepository.updateUserPassword(userDb.id, hashedPassword, (err) => {
-              try {
-                if (err) {
-                  console.error("Erro ao atualizar senha:", err);
-                  return res.status(500).json({ error: "Erro ao atualizar senha" });
-                }
-
-                return res.json({ message: "Senha alterada com sucesso!" });
-              } catch (innerErr) {
-                console.error("Erro crítico ao atualizar senha:", innerErr);
-                return res.status(500).json({ error: "Erro interno no servidor" });
-              }
-            });
-
-          } catch (innerErr) {
-            console.error("Erro crítico ao processar usuário:", innerErr);
-            return res.status(500).json({ error: "Erro interno no servidor" });
-          }
-        });
-
-      } catch (innerErr) {
-        console.error("Erro crítico ao validar token:", innerErr);
-        return res.status(500).json({ error: "Erro interno no servidor" });
+      if (err) {
+        console.error("Erro ao validar token:", err);
+        return res.status(500).json({ error: "Erro interno ao processar token" });
       }
+
+      if (!valid) {
+        return res.status(400).json({ error: "Token inválido ou expirado" });
+      }
+
+      // busca usuário
+      UserRepository.getByEmail(email, (err, userDb) => {
+        if (err) {
+          console.error("Erro ao buscar usuário:", err);
+          return res.status(500).json({ error: "Erro ao buscar usuário" });
+        }
+
+        if (!userDb) {
+          return res.status(404).json({ error: "Usuário não encontrado" });
+        }
+
+        // hash da senha
+        const hashedPassword = bcrypt.hashSync(password, 10);
+
+        // atualiza senha
+        UserRepository.updateUserPassword(userDb.id, hashedPassword, (err) => {
+          if (err) {
+            console.error("Erro ao atualizar senha:", err);
+            return res.status(500).json({ error: "Erro ao atualizar senha" });
+          }
+
+          return res.json({ message: "Senha alterada com sucesso!" });
+        });
+      });
     });
 
   } catch (error) {
